@@ -1,0 +1,9 @@
+{
+    "name": "junju/backend",
+    "autoload": {
+        "psr-4": {
+            "Junju\\Backend\\": "src/"
+        }
+    },
+    "require": {}
+}
