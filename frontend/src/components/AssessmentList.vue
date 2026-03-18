@@ -46,18 +46,19 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import api from '../api/axios'; // Import config yang baru kita buat
+import api from '../api/axios'; // Pastikan path ke config axios kamu benar
 
 const categories = ref([]);
 
-onMounted(async () => {
+const fetchData = async () => {
   try {
     const response = await api.get('/categories');
-    categories.value = response.data; // Masukin data JSON tadi ke variabel
-    console.log("Data masuk!", categories.value);
+    categories.value = response.data; // Sesuaikan jika API kamu bungkus 'data' lagi
+    console.log("Data loaded!", categories.value);
   } catch (error) {
-    console.error("Gagal total!", error);
+    alert("Cek server Laravel kamu! Kayaknya mati.");
   }
-});
-</script>
+};
 
+onMounted(fetchData);
+</script>
