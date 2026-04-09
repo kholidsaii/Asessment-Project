@@ -1,4 +1,4 @@
-const Hospital = require("../models/Hospital");
+const Hospital = require("../models/Hospitals");
 const errorHandler = require("../utils/errorHandler");
 
 class HospitalController {

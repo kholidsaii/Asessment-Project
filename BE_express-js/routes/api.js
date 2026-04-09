@@ -1,16 +1,20 @@
 const HospitalController = require("../controllers/HospitalController");
-
+const UserController = require("../controllers/UserController"); // Import controller user baru
 const express = require("express");
 const router = express.Router();
 
-router.get("/", (req, res) =>{
-    res.send("Hello Express! Ini adalah tampilan kosong projek kelompok Dream Team");
-});
-
+// --- Hospital Routes ---
 router.get("/hospitals", HospitalController.index);
+router.get("/hospitals/:id", HospitalController.show);
 router.post("/hospitals", HospitalController.store);
 router.put("/hospitals/:id", HospitalController.update);
 router.delete("/hospitals/:id", HospitalController.destroy);
-router.get("/hospitals/:id", HospitalController.show);
 
+// --- User Routes ---
+router.get("/users", UserController.index);
+router.post("/users", UserController.store);
+router.delete("/users/:id", UserController.destroy);
+
+// Route untuk login
+router.post("/login", UserController.login);
 module.exports = router;
