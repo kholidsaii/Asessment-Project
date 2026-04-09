@@ -1,124 +1,91 @@
-// class HospitalController{
-//     index(req, res){
-//         const data ={
-//             message: "Menampilkan semua data",
-//             data:[],
-//         };
-//         res.json(data);
-//     }
-//     store(req, res){
-//         res.send("Menambahkan semua Rumah Sakit")
-//     }
-//     update(req, res){
-//         const {id} = req.params;
-//         res.send(`Mengubah data Rumah Sakit ${id}`)
-//     }
-//     destroy(req, res){
-//         const {id} = req.params;
-//         res.send(`Menghapus data Rumah Sakit ${id}`)
-//     }
-// }
-
-// const objects = new HospitalController();
-
-// module.exports = objects;
-
-const prisma = require("../prisma/client");
+const Hospital = require("../models/Hospital");
+const errorHandler = require("../utils/errorHandler");
 
 class HospitalController {
 
-    async index(req, res) {
-        try {
-            const { name, code, class: hospitalClass } = req.query;
+  index(req, res){
+    Hospital.getAll((err, results)=>{
+      if(err){
+        return errorHandler(res, err, 500, "Gagal ambil data hospital");
+      }
 
-            const hospitals = await prisma.hospital.findMany({
-                where: {
-                    name: name ? { contains: name } : undefined,
-                    code: code ? { contains: code } : undefined,
-                    class: hospitalClass ? hospitalClass : undefined
-                }
-            });
-
-            res.json(hospitals);
-            
-        } catch (error) {
-            res.status(500).json({ message: error.message });
-        }
-    }
-
-    async store(req, res) {
-        try {
-            const { name, code, class: hospitalClass } = req.body;
-
-            if (!name || !code || !hospitalClass) {
-                return res.status(400).json({
-                    message: "Semua field wajib diisi"
-                });
-            }
-
-            const hospital = await prisma.hospital.create({
-                data: {
-                    name,
-                    code,
-                    class: hospitalClass
-                }
-            });
-
-            res.json(hospital);
-        } catch (error) {
-            if (error.code === "P2002") {
-                return res.status(400).json({
-                    message: "Code sudah digunakan"
-                });
-            }
-
-            res.status(500).json({ message: error.message });
-        }
-    }
-
-    async update(req, res) {
-        try {
-            const { id } = req.params;
-            const { name, code, class: hospitalClass } = req.body;
-
-            const hospital = await prisma.hospital.update({
-                where: { id: Number(id) },
-                data: {
-                    name,
-                    code,
-                    class: hospitalClass
-                }
-            });
-
-            res.json(hospital);
-        } catch (error) {
-            res.status(500).json({ message: error.message });
-        }
-    }
-
-    async destroy(req, res) {
-        try {
-            const { id } = req.params;
-
-            await prisma.hospital.delete({
-                where: { id: Number(id) }
-            });
-
-            res.json({ message: "Deleted successfully" });
-        } catch (error) {
-            res.status(500).json({ message: error.message });
-        }
-    }
-
-    async show(req, res) {
-        const { id } = req.params;
-
-        const hospital = await prisma.hospital.findUnique({
-            where: { id: Number(id) }
+      if(results.length == 0){
+        return res.status(404).json({
+          message: "Data hospital kosong"
         });
+      }
 
-        res.json(hospital);
-    }
+      res.json({
+        message: "Berhasil ambil semua data hospital",
+        data: results
+      });
+    });
+  }
+
+  show(req, res){
+    const {id} = req.params;
+
+    Hospital.getById(id, (err, results)=>{
+      if(err){
+        return errorHandler(res, err, 500, "Gagal ambil detail hospital");
+      }
+
+      if(results.length == 0){
+        return res.status(404).json({
+          message: "Hospital tidak ditemukan"
+        });
+      }
+
+      res.json({
+        message: "Detail hospital",
+        data: results[0]
+      });
+    });
+  }
+
+  store(req, res){
+    const data = req.body;
+
+    Hospital.create(data, (err)=>{
+      if(err){
+        return errorHandler(res, err, 500, "Gagal tambah hospital");
+      }
+
+      res.status(201).json({
+        message: "Hospital berhasil ditambahkan",
+        data: data
+      });
+    });
+  }
+
+  update(req, res){
+    const {id} = req.params;
+    const data = req.body;
+
+    Hospital.update(id, data, (err)=>{
+      if(err){
+        return errorHandler(res, err, 500, "Gagal update hospital");
+      }
+
+      res.json({
+        message: "Hospital berhasil diupdate"
+      });
+    });
+  }
+
+  destroy(req, res){
+    const {id} = req.params;
+
+    Hospital.delete(id, (err)=>{
+      if(err){
+        return errorHandler(res, err, 500, "Gagal hapus hospital");
+      }
+
+      res.json({
+        message: "Hospital berhasil dihapus"
+      });
+    });
+  }
 }
 
 module.exports = new HospitalController();
