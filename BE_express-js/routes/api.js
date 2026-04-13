@@ -1,5 +1,6 @@
 const HospitalController = require("../controllers/HospitalController");
-const UserController = require("../controllers/UserController"); // Import controller user baru
+const UserController = require("../controllers/UserController");
+const IndicatorController = require("../controllers/IndicatorController");
 const express = require("express");
 const router = express.Router();
 
@@ -18,3 +19,10 @@ router.delete("/users/:id", UserController.destroy);
 // Route untuk login
 router.post("/login", UserController.login);
 module.exports = router;
+
+// Indicator Routes
+router.get("/indicators", IndicatorController.index);
+router.get("/indicators/:id", IndicatorController.show);
+router.post("/indicators", IndicatorController.store);
+router.put("/indicators/:id", IndicatorController.update);
+router.delete("/indicators/:id", IndicatorController.destroy);
