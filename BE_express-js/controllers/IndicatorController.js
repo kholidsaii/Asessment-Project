@@ -1,103 +1,126 @@
-const Indicator = require("../models/Indicators");
 const { validateIndicator } = require("../utils/validator");
+const prisma = require("../config/prisma");
 const errorHandler = require("../utils/errorHandler");
 
 class IndicatorController {
-
-  index(req, res) {
-    Indicator.getAll((err, results) => {
-      if (err) {
-        return errorHandler(res, err, 500, "Gagal ambil data indikator");
-      }
-
+  // 1. Ambil Semua Indikator
+  async index(req, res) {
+    try {
+      const results = await prisma.indicators.findMany();
+      
       if (results.length === 0) {
-        return res.status(404).json({
-          message: "Data indikator kosong"
-        });
+        return res.status(404).json({ message: "Data indikator kosong" });
       }
 
       res.json({
+        success: true,
         message: "Berhasil ambil semua indikator",
         data: results
       });
-    });
+    } catch (err) {
+      return errorHandler(res, err, 500, "Gagal ambil data indikator");
+    }
   }
 
-  show(req, res) {
-    const { id } = req.params;
+  // 2. Detail Indikator
+  async show(req, res) {
+    try {
+      const { id } = req.params;
+      const result = await prisma.indicators.findUnique({
+        where: { id: parseInt(id) }
+      });
 
-    Indicator.getById(id, (err, results) => {
-      if (err) {
-        return errorHandler(res, err, 500, "Gagal ambil detail indikator");
+      if (!result) {
+        return res.status(404).json({ message: "Indikator tidak ditemukan" });
       }
 
-      if (results.length === 0) {
-        return res.status(404).json({
-          message: "Indikator tidak ditemukan"
+      res.json({
+        success: true,
+        message: "Detail indikator",
+        data: result
+      });
+    } catch (err) {
+      return errorHandler(res, err, 500, "Gagal ambil detail indikator");
+    }
+  }
+
+  // 3. Simpan Indikator (INI YANG ERROR TADI)
+  async store(req, res) {
+    try {
+      const data = req.body;
+
+      // 🔥 VALIDATOR FIX
+      const validation = validateIndicator(data);
+      if (!validation.isValid) {
+        // Kita kirim errors[0] atau seluruh array errors
+        return res.status(400).json({
+          success: false,
+          message: "Validasi gagal",
+          errors: validation.errors
         });
       }
 
-      res.json({
-        message: "Detail indikator",
-        data: results[0]
+      const newIndicator = await prisma.indicators.create({
+        data: {
+          name: data.name,
+          description: data.description
+        }
       });
-    });
-  }
-
-  store(req, res) {
-    const data = req.body;
-
-    // 🔥 VALIDATOR
-    const error = validateIndicator(data);
-    if (error) {
-      return errorHandler(res, error, 400, error);
-    }
-
-    Indicator.create(data, (err) => {
-      if (err) {
-        return errorHandler(res, err, 500, "Gagal tambah indikator");
-      }
 
       res.status(201).json({
+        success: true,
         message: "Indikator berhasil ditambahkan",
-        data: data
+        data: newIndicator
       });
-    });
-  }
-
-  update(req, res) {
-    const { id } = req.params;
-    const data = req.body;
-
-    // 🔥 VALIDATOR
-    const error = validateIndicator(data);
-    if (error) {
-      return errorHandler(res, error, 400, error);
+    } catch (err) {
+      return errorHandler(res, err, 500, "Gagal tambah indikator");
     }
-
-    Indicator.update(id, data, (err) => {
-      if (err) {
-        return errorHandler(res, err, 500, "Gagal update indikator");
-      }
-
-      res.json({
-        message: "Indikator berhasil diupdate"
-      });
-    });
   }
 
-  destroy(req, res) {
-    const { id } = req.params;
+  // 4. Update Indikator
+  async update(req, res) {
+    try {
+      const { id } = req.params;
+      const data = req.body;
 
-    Indicator.delete(id, (err) => {
-      if (err) {
-        return errorHandler(res, err, 500, "Gagal hapus indikator");
+      const validation = validateIndicator(data);
+      if (!validation.isValid) {
+        return res.status(400).json({ success: false, errors: validation.errors });
       }
 
+      const updated = await prisma.indicators.update({
+        where: { id: parseInt(id) },
+        data: {
+          name: data.name,
+          description: data.description
+        }
+      });
+
       res.json({
+        success: true,
+        message: "Indikator berhasil diupdate",
+        data: updated
+      });
+    } catch (err) {
+      return errorHandler(res, err, 500, "Gagal update indikator");
+    }
+  }
+
+  // 5. Hapus Indikator
+  async destroy(req, res) {
+    try {
+      const { id } = req.params;
+      await prisma.indicators.delete({
+        where: { id: parseInt(id) }
+      });
+
+      res.json({
+        success: true,
         message: "Indikator berhasil dihapus"
       });
-    });
+    } catch (err) {
+      return errorHandler(res, err, 500, "Gagal hapus indikator");
+    }
   }
 }
 
