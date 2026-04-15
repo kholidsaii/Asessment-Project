@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model assessments {
+  id          Int  @id @default(autoincrement())
+  hospital_id Int?
+  question_id Int?
+  score       Int?
+}
+
+model categories {
+  id        Int         @id @default(autoincrement())
+  name      String
+  slug      String      @unique
+  group     String
+  questions questions[]
+}
+
+model hospitals {
+  id      Int     @id @default(autoincrement())
+  name    String? @db.VarChar(255)
+  code    String? @unique(map: "code") @db.VarChar(50)
+  class   String? @db.VarChar(50)
+  address String? @db.Text
+}
+
+model indicators {
+  id          Int     @id @default(autoincrement())
+  name        String? @db.VarChar(255)
+  description String? @db.Text
+}
+
+model questions {
+  id          Int        @id @default(autoincrement())
+  category_id Int
+  indicator   String
+  categories  categories @relation(fields: [category_id], references: [id])
+
+  @@index([category_id], map: "questions_category_id_fkey")
+}
+
+model users {
+  id       Int     @id @default(autoincrement())
+  name     String? @db.VarChar(255)
+  email    String? @unique(map: "email") @db.VarChar(255)
+  password String? @db.VarChar(255)
+  role     String? @db.VarChar(50)
+}

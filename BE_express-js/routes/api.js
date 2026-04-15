@@ -10,19 +10,19 @@ router.get("/hospitals/:id", HospitalController.show);
 router.post("/hospitals", HospitalController.store);
 router.put("/hospitals/:id", HospitalController.update);
 router.delete("/hospitals/:id", HospitalController.destroy);
-
+router.get("/stats", HospitalController.getStats);
 // --- User Routes ---
 router.get("/users", UserController.index);
 router.post("/users", UserController.store);
 router.delete("/users/:id", UserController.destroy);
-
-// Route untuk login
 router.post("/login", UserController.login);
-module.exports = router;
 
-// Indicator Routes
+// --- Indicator Routes ---
 router.get("/indicators", IndicatorController.index);
 router.get("/indicators/:id", IndicatorController.show);
 router.post("/indicators", IndicatorController.store);
 router.put("/indicators/:id", IndicatorController.update);
 router.delete("/indicators/:id", IndicatorController.destroy);
+
+// PINDAHKAN KE SINI (Paling Bawah)
+module.exports = router;
