@@ -28,6 +28,11 @@ const validateHospital = (data) => {
         isValid: errors.length === 0,
         errors: errors
     };
+    // Tambahkan ini di utils/validator.js
+if (!data.class) {
+    errors.push("Class hospital wajib diisi");
 };
+};
+
 
 module.exports = { validateHospital };
