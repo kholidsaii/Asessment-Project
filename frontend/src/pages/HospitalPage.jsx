@@ -15,16 +15,17 @@ const HospitalPage = () => {
     address: ''
   });
 
-  const fetchHospitals = async () => {
-    try {
-      const res = await api.get('/hospitals');
-      setHospitals(res.data.data || []);
-      setLoading(false);
-    } catch (err) {
-      setHospitals([]);
-      setLoading(false);
-    }
-  };
+ // Contoh di HospitalPage.jsx saat ambil data
+const fetchHospitals = async () => {
+  try {
+    const res = await api.get('/hospitals');
+    // Karena Backend kita kirim: res.json({ message: "...", data: rows })
+    // Maka di frontend:
+    setHospitals(res.data.data); 
+  } catch (err) {
+    console.error("Gagal ambil data RS");
+  }
+};
 
   useEffect(() => { fetchHospitals(); }, []);
 

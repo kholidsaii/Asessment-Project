@@ -16,26 +16,28 @@ function App() {
     loading: true
   });
 
-  const fetchDashboardData = async () => {
-    try {
-      setStats(prev => ({ ...prev, loading: true }));
-      const [resHospitals, resUsers, resIndicators] = await Promise.all([
-        api.get('/hospitals'),
-        api.get('/users'),
-        api.get('/indicators')
-      ]);
+ // src/App.jsx
+const fetchDashboardData = async () => {
+  try {
+    setStats(prev => ({ ...prev, loading: true }));
+    
+    // Endpoint ini memanggil getStats di HospitalController
+    const res = await api.get('/hospitals/stats'); 
+    
+    // Sesuaikan dengan struktur res.json({ success: true, data: {...} }) dari backend
+    const dashboardData = res.data.data;
 
-      setStats({
-        hospitals: resHospitals.data.data ? resHospitals.data.data.length : 0,
-        users: resUsers.data.data ? resUsers.data.data.length : 0,
-        indicators: resIndicators.data.data ? resIndicators.data.data.length : 0,
-        loading: false
-      });
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      setStats(prev => ({ ...prev, loading: false }));
-    }
-  };
+    setStats({
+      hospitals: dashboardData.totalHospitals,
+      users: dashboardData.totalUsers,
+      indicators: dashboardData.totalIndicators,
+      loading: false
+    });
+  } catch (error) {
+    console.error("Error fetching stats:", error);
+    setStats(prev => ({ ...prev, loading: false }));
+  }
+};
 
   useEffect(() => {
     fetchDashboardData();

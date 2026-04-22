@@ -1,70 +1,68 @@
-const prisma = require("../config/prisma");
+const db = require("../config/db"); // Menggunakan pool mysql2
 const errorHandler = require("../utils/errorHandler");
 const { validateHospital } = require("../utils/validator");
 
-
 class HospitalController {
-  // Ambil Semua Data
+  // 1. Ambil Semua Data (SELECT *)
   async index(req, res) {
     try {
-      const results = await prisma.hospitals.findMany(); // 'hospitals' sesuai nama tabel di DB
+      const [rows] = await db.query("SELECT * FROM hospitals");
       
-      if (results.length === 0) {
+      if (rows.length === 0) {
         return res.status(404).json({ message: "Data hospital kosong" });
       }
 
       res.json({
-        message: "Berhasil ambil semua data hospital",
-        data: results
+        message: "Berhasil ambil semua data hospital (Native SQL)",
+        data: rows
       });
     } catch (err) {
       return errorHandler(res, err, 500, "Gagal ambil data hospital");
     }
   }
+
+  // 2. Dashboard Statistik (COUNT)
   async getStats(req, res) {
     try {
-      // Kita hitung isi tabel secara paralel agar cepat
-      const [hospitals, users, indicators] = await Promise.all([
-        prisma.hospitals.count(),
-        prisma.users.count(),
-        prisma.indicators.count()
-      ]);
+      // Kita jalankan query COUNT secara manual untuk masing-masing tabel
+      const [hRes] = await db.query("SELECT COUNT(*) as total FROM hospitals");
+      const [uRes] = await db.query("SELECT COUNT(*) as total FROM users");
+      const [iRes] = await db.query("SELECT COUNT(*) as total FROM indicators");
 
       res.json({
         success: true,
         data: {
-          totalHospitals: hospitals,
-          totalUsers: users,
-          totalIndicators: indicators,
-          totalAssessments: 45 // Kamu bisa ganti prisma.assessments.count() jika sudah ada datanya
+          totalHospitals: hRes[0].total,
+          totalUsers: uRes[0].total,
+          totalIndicators: iRes[0].total,
+          totalAssessments: 0 // Sesuaikan jika tabel assessment sudah ada
         }
       });
     } catch (err) {
       res.status(500).json({ message: "Gagal menghitung statistik", error: err.message });
     }
   }
-  // Detail Data
+
+  // 3. Detail Data (SELECT WHERE ID)
   async show(req, res) {
     try {
       const { id } = req.params;
-      const hospital = await prisma.hospitals.findUnique({
-        where: { id: parseInt(id) }
-      });
+      const [rows] = await db.query("SELECT * FROM hospitals WHERE id = ?", [id]);
 
-      if (!hospital) {
+      if (rows.length === 0) {
         return res.status(404).json({ message: "Hospital tidak ditemukan" });
       }
 
       res.json({
         message: "Detail hospital",
-        data: hospital
+        data: rows[0]
       });
     } catch (err) {
       return errorHandler(res, err, 500, "Gagal ambil detail hospital");
     }
   }
 
-  // Simpan Data (Create)
+  // 4. Simpan Data (INSERT)
   async store(req, res) {
     try {
       const data = req.body;
@@ -74,25 +72,19 @@ class HospitalController {
         return res.status(400).json({ message: "Validasi input gagal", errors });
       }
 
-      const newHospital = await prisma.hospitals.create({
-        data: {
-          name: data.name,
-          code: data.code,
-          class: data.class,
-          address: data.address
-        }
-      });
+      const sql = "INSERT INTO hospitals (name, code, class, address) VALUES (?, ?, ?, ?)";
+      const [result] = await db.execute(sql, [data.name, data.code, data.class, data.address]);
 
       res.status(201).json({
         message: "Hospital berhasil ditambahkan",
-        data: newHospital
+        data: { id: result.insertId, ...data }
       });
     } catch (err) {
       return errorHandler(res, err, 500, "Gagal tambah hospital");
     }
   }
 
-  // Update Data
+  // 5. Update Data (UPDATE WHERE ID)
   async update(req, res) {
     try {
       const { id } = req.params;
@@ -103,50 +95,27 @@ class HospitalController {
         return res.status(400).json({ message: "Validasi input gagal", errors });
       }
 
-      const updated = await prisma.hospitals.update({
-        where: { id: parseInt(id) },
-        data: data
-      });
+      const sql = "UPDATE hospitals SET name = ?, code = ?, class = ?, address = ? WHERE id = ?";
+      await db.execute(sql, [data.name, data.code, data.class, data.address, id]);
 
       res.json({
         message: "Hospital berhasil diupdate",
-        data: updated
+        data: { id, ...data }
       });
     } catch (err) {
       return errorHandler(res, err, 500, "Gagal update hospital");
     }
   }
 
-  // Hapus Data
+  // 6. Hapus Data (DELETE)
   async destroy(req, res) {
     try {
       const { id } = req.params;
-      await prisma.hospitals.delete({
-        where: { id: parseInt(id) }
-      });
+      await db.execute("DELETE FROM hospitals WHERE id = ?", [id]);
 
       res.json({ message: "Hospital berhasil dihapus" });
     } catch (err) {
       return errorHandler(res, err, 500, "Gagal hapus hospital");
-    }
-  }
-
-  // Tambahan untuk Dashboard: Hitung Statistik
-  async getStats(req, res) {
-    try {
-      const [hospitals, users, indicators] = await Promise.all([
-        prisma.hospitals.count(),
-        prisma.users.count(),
-        prisma.indicators.count()
-      ]);
-
-      res.json({
-        hospitals,
-        users,
-        indicators
-      });
-    } catch (err) {
-      res.status(500).json({ message: "Gagal ambil statistik" });
     }
   }
 }
