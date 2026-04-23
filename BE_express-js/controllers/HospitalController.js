@@ -1,4 +1,4 @@
-const db = require("../config/db"); // Menggunakan pool mysql2
+const db = require("../config/database"); // Menggunakan pool mysql2
 const errorHandler = require("../utils/errorHandler");
 const { validateHospital } = require("../utils/validator");
 

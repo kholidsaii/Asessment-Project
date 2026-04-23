@@ -1,4 +1,4 @@
-const db = require("../config/db");
+const db = require("../config/database"); // Menggunakan pool mysql2
 const errorHandler = require("../utils/errorHandler");
 
 class UserController {
