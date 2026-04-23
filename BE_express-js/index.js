@@ -13,7 +13,9 @@ app.use(express.urlencoded({ extended: true })); // Tambahkan parameter ini agar
 // Sebaiknya pilih salah satu saja, standarnya menggunakan prefix /api
 app.use("/api", router);
 
-const PORT = 3000;
-app.listen(PORT, () => {
-    console.log(`Server berjalan di http://localhost:${PORT}`);
-});
+// const PORT = 3000;
+// app.listen(PORT, () => {
+//     console.log(`Server berjalan di http://localhost:${PORT}`);
+// });
+
+// tutup dulu
