@@ -10,11 +10,12 @@ router.get("/hospitals/:id", HospitalController.show);
 router.post("/hospitals", HospitalController.store);
 router.put("/hospitals/:id", HospitalController.update);
 router.delete("/hospitals/:id", HospitalController.destroy);
-router.get("/stats", HospitalController.getStats);
 // --- User Routes ---
 router.get("/users", UserController.index);
 router.post("/users", UserController.store);
 router.delete("/users/:id", UserController.destroy);
+
+// Route untuk login
 router.post("/login", UserController.login);
 
 // --- Indicator Routes ---

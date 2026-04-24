@@ -1,122 +1,100 @@
 const db = require("../config/database"); // Menggunakan pool mysql2
+const Hospital = require("../models/Hospitals");
 const errorHandler = require("../utils/errorHandler");
-const { validateHospital } = require("../utils/validator");
+const { validateHospital } = require("../utils/validator"); // Import helper validasi
 
 class HospitalController {
-  // 1. Ambil Semua Data (SELECT *)
-  async index(req, res) {
-    try {
-      const [rows] = await db.query("SELECT * FROM hospitals");
-      
-      if (rows.length === 0) {
-        return res.status(404).json({ message: "Data hospital kosong" });
+
+  index(req, res) {
+    Hospital.getAll((err, results) => {
+      if (err) {
+        return errorHandler(res, err, 500, "Gagal ambil data hospital");
       }
-
-      res.json({
-        message: "Berhasil ambil semua data hospital (Native SQL)",
-        data: rows
-      });
-    } catch (err) {
-      return errorHandler(res, err, 500, "Gagal ambil data hospital");
-    }
-  }
-
-  // 2. Dashboard Statistik (COUNT)
-  async getStats(req, res) {
-    try {
-      // Kita jalankan query COUNT secara manual untuk masing-masing tabel
-      const [hRes] = await db.query("SELECT COUNT(*) as total FROM hospitals");
-      const [uRes] = await db.query("SELECT COUNT(*) as total FROM users");
-      const [iRes] = await db.query("SELECT COUNT(*) as total FROM indicators");
-
+      if (results.length == 0) {
+        return errorHandler(res, "Data hospital kosong", 404, "Data hospital kosong");
+      }
       res.json({
         success: true,
-        data: {
-          totalHospitals: hRes[0].total,
-          totalUsers: uRes[0].total,
-          totalIndicators: iRes[0].total,
-          totalAssessments: 0 // Sesuaikan jika tabel assessment sudah ada
-        }
+        message: "Berhasil ambil semua data hospital",
+        data: results
       });
-    } catch (err) {
-      res.status(500).json({ message: "Gagal menghitung statistik", error: err.message });
-    }
+    });
   }
 
-  // 3. Detail Data (SELECT WHERE ID)
-  async show(req, res) {
-    try {
-      const { id } = req.params;
-      const [rows] = await db.query("SELECT * FROM hospitals WHERE id = ?", [id]);
-
-      if (rows.length === 0) {
-        return res.status(404).json({ message: "Hospital tidak ditemukan" });
+  show(req, res) {
+    const { id } = req.params;
+    Hospital.getById(id, (err, results) => {
+      if (err) {
+        return errorHandler(res, err, 500, "Gagal ambil detail hospital");
       }
-
+      if (results.length == 0) {
+        return errorHandler(res, "Hospital tidak ditemukan", 404, "Hospital tidak ditemukan");
+      }
       res.json({
+        success: true,
         message: "Detail hospital",
-        data: rows[0]
+        data: results[0]
       });
-    } catch (err) {
-      return errorHandler(res, err, 500, "Gagal ambil detail hospital");
-    }
+    });
   }
 
-  // 4. Simpan Data (INSERT)
-  async store(req, res) {
-    try {
-      const data = req.body;
-      const { isValid, errors } = validateHospital(data);
+  // SPRINT 5: Validasi pada CREATE
+  store(req, res) {
+    const data = req.body;
 
-      if (!isValid) {
-        return res.status(400).json({ message: "Validasi input gagal", errors });
+    // Jalankan validasi
+    const { isValid, errors } = validateHospital(data);
+
+    if (!isValid) {
+      return errorHandler(res, errors, 400, "Validasi input gagal");
+    }
+
+    Hospital.create(data, (err) => {
+      if (err) {
+        return errorHandler(res, err, 500, "Gagal tambah hospital");
       }
-
-      const sql = "INSERT INTO hospitals (name, code, class, address) VALUES (?, ?, ?, ?)";
-      const [result] = await db.execute(sql, [data.name, data.code, data.class, data.address]);
-
       res.status(201).json({
+        success: true,
         message: "Hospital berhasil ditambahkan",
-        data: { id: result.insertId, ...data }
+        data: data
       });
-    } catch (err) {
-      return errorHandler(res, err, 500, "Gagal tambah hospital");
-    }
+    });
   }
 
-  // 5. Update Data (UPDATE WHERE ID)
-  async update(req, res) {
-    try {
-      const { id } = req.params;
-      const data = req.body;
-      const { isValid, errors } = validateHospital(data);
+  // SPRINT 5: Validasi pada UPDATE
+  update(req, res) {
+    const { id } = req.params;
+    const data = req.body;
 
-      if (!isValid) {
-        return res.status(400).json({ message: "Validasi input gagal", errors });
+    // Jalankan validasi
+    const { isValid, errors } = validateHospital(data);
+
+    if (!isValid) {
+      return errorHandler(res, errors, 400, "Validasi input gagal");
+    }
+
+    Hospital.update(id, data, (err) => {
+      if (err) {
+        return errorHandler(res, err, 500, "Gagal update hospital");
       }
-
-      const sql = "UPDATE hospitals SET name = ?, code = ?, class = ?, address = ? WHERE id = ?";
-      await db.execute(sql, [data.name, data.code, data.class, data.address, id]);
-
       res.json({
-        message: "Hospital berhasil diupdate",
-        data: { id, ...data }
+        success: true,
+        message: "Hospital berhasil diupdate"
       });
-    } catch (err) {
-      return errorHandler(res, err, 500, "Gagal update hospital");
-    }
+    });
   }
 
-  // 6. Hapus Data (DELETE)
-  async destroy(req, res) {
-    try {
-      const { id } = req.params;
-      await db.execute("DELETE FROM hospitals WHERE id = ?", [id]);
-
-      res.json({ message: "Hospital berhasil dihapus" });
-    } catch (err) {
-      return errorHandler(res, err, 500, "Gagal hapus hospital");
-    }
+  destroy(req, res) {
+    const { id } = req.params;
+    Hospital.delete(id, (err) => {
+      if (err) {
+        return errorHandler(res, err, 500, "Gagal hapus hospital");
+      }
+      res.json({
+        success: true,
+        message: "Hospital berhasil dihapus"
+      });
+    });
   }
 }
 

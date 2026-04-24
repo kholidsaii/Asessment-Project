@@ -4,6 +4,9 @@ const Indicator = {
   getAll: (callback) => {
     db.query("SELECT * FROM indicators", callback);
   },
+  getById: (id, callback) => {
+    db.query("SELECT * FROM indicators WHERE id=?", [id], callback);
+  },
   create: (data, callback) => {
     // Sesuaikan kolomnya dengan tabel kamu (misal: name, unit)
     const sql = "INSERT INTO indicators (name, description) VALUES (?, ?)";
