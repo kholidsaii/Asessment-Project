@@ -50,7 +50,30 @@ const validateIndicator = (data) => {
         errors: errors
     };
 };
+const validateUser = (data) => {
+    let errors = [];
+
+    //validasi email (harus format email yang benar)
+    if (!data.email || !validator.isEmail(String(data.email))) {
+        errors.push("Format email tidak valid");
+    }
+
+    // Validasi Password (Minimal 6 karakter)
+    if (!data.password || !validator.isLength(String(data.password), { min: 6 })) {
+        errors.push("Password minimal harus 6 karakter");
+    }
+
+    // Validasi Username (Hanya untuk Register)
+    if (data.username !== undefined && validator.isEmpty(String(data.username).trim())) {
+        errors.push("Username tidak boleh kosong");
+    }
+
+    return {
+        isValid: errors.length === 0,
+        errors: errors
+    };
+};
     
 
 
-module.exports = { validateHospital, validateIndicator };
+module.exports = { validateHospital, validateIndicator, validateUser };
