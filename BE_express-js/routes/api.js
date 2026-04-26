@@ -24,5 +24,4 @@ router.post("/indicators", IndicatorController.store);
 router.put("/indicators/:id", IndicatorController.update);
 router.delete("/indicators/:id", IndicatorController.destroy);
 
-// PINDAHKAN KE SINI (Paling Bawah)
 module.exports = router;
