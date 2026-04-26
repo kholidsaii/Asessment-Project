@@ -1,112 +1,105 @@
-const db = require("../config/db"); // Menggunakan pool mysql2
+const db = require("../config/database"); // Menggunakan pool mysql2
+const Indicator = require("../models/Indicators");
 const { validateIndicator } = require("../utils/validator");
 const errorHandler = require("../utils/errorHandler");
 
 class IndicatorController {
-  // 1. Ambil Semua Indikator
-  async index(req, res) {
-    try {
-      const [rows] = await db.query("SELECT * FROM indicators");
-      
-      if (rows.length === 0) {
-        return res.status(404).json({ message: "Data indikator kosong" });
+
+  index(req, res) {
+    Indicator.getAll((err, results) => {
+      if (err) {
+        return errorHandler(res, err, 500, "Gagal ambil data indikator");
+      }
+
+      if (results.length === 0) {
+        return errorHandler(res, "Data indikator kosong", 404, "Data indikator kosong");
       }
 
       res.json({
         success: true,
-        message: "Berhasil ambil semua indikator (Native SQL)",
-        data: rows
+        message: "Berhasil ambil semua indikator",
+        data: results
       });
-    } catch (err) {
-      return errorHandler(res, err, 500, "Gagal ambil data indikator");
-    }
+    });
   }
 
-  // 2. Detail Indikator
-  async show(req, res) {
-    try {
-      const { id } = req.params;
-      const [rows] = await db.query("SELECT * FROM indicators WHERE id = ?", [id]);
+  show(req, res) {
+    const { id } = req.params;
 
-      if (rows.length === 0) {
-        return res.status(404).json({ message: "Indikator tidak ditemukan" });
+    Indicator.getById(id, (err, results) => {
+      if (err) {
+        return errorHandler(res, err, 500, "Gagal ambil detail indikator");
+      }
+
+      if (results.length === 0) {
+        return errorHandler(res, "Indikator tidak ditemukan", 404, "Indikator tidak ditemukan");
       }
 
       res.json({
         success: true,
         message: "Detail indikator",
-        data: rows[0]
+        data: results[0]
       });
-    } catch (err) {
-      return errorHandler(res, err, 500, "Gagal ambil detail indikator");
-    }
+    });
   }
 
-  // 3. Simpan Indikator
-  async store(req, res) {
-    try {
-      const data = req.body;
+  store(req, res) {
+    const data = req.body;
 
-      // Jalankan Validasi
-      const validation = validateIndicator(data);
-      if (!validation.isValid) {
-        return res.status(400).json({
-          success: false,
-          message: "Validasi gagal",
-          errors: validation.errors
-        });
+    // 🔥 VALIDATOR
+    const error = validateIndicator(data);
+    if (error) {
+      return errorHandler(res, error, 400, error);
+    }
+
+    Indicator.create(data, (err) => {
+      if (err) {
+        return errorHandler(res, err, 500, "Gagal tambah indikator");
       }
-
-      const sql = "INSERT INTO indicators (name, description) VALUES (?, ?)";
-      const [result] = await db.execute(sql, [data.name, data.description]);
 
       res.status(201).json({
         success: true,
         message: "Indikator berhasil ditambahkan",
-        data: { id: result.insertId, ...data }
+        data: data
       });
-    } catch (err) {
-      return errorHandler(res, err, 500, "Gagal tambah indikator");
-    }
+    });
   }
 
-  // 4. Update Indikator
-  async update(req, res) {
-    try {
-      const { id } = req.params;
-      const data = req.body;
+  update(req, res) {
+    const { id } = req.params;
+    const data = req.body;
 
-      const validation = validateIndicator(data);
-      if (!validation.isValid) {
-        return res.status(400).json({ success: false, errors: validation.errors });
+    // 🔥 VALIDATOR
+    const error = validateIndicator(data);
+    if (error) {
+      return errorHandler(res, error, 400, error);
+    }
+
+    Indicator.update(id, data, (err) => {
+      if (err) {
+        return errorHandler(res, err, 500, "Gagal update indikator");
       }
-
-      const sql = "UPDATE indicators SET name = ?, description = ? WHERE id = ?";
-      await db.execute(sql, [data.name, data.description, id]);
 
       res.json({
         success: true,
-        message: "Indikator berhasil diupdate",
-        data: { id, ...data }
+        message: "Indikator berhasil diupdate"
       });
-    } catch (err) {
-      return errorHandler(res, err, 500, "Gagal update indikator");
-    }
+    });
   }
 
-  // 5. Hapus Indikator
-  async destroy(req, res) {
-    try {
-      const { id } = req.params;
-      await db.execute("DELETE FROM indicators WHERE id = ?", [id]);
+  destroy(req, res) {
+    const { id } = req.params;
+
+    Indicator.delete(id, (err) => {
+      if (err) {
+        return errorHandler(res, err, 500, "Gagal hapus indikator");
+      }
 
       res.json({
         success: true,
         message: "Indikator berhasil dihapus"
       });
-    } catch (err) {
-      return errorHandler(res, err, 500, "Gagal hapus indikator");
-    }
+    });
   }
 }
 

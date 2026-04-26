@@ -1,95 +1,85 @@
-const db = require("../config/db");
+const User = require("../models/User");
 const errorHandler = require("../utils/errorHandler");
+const { validateUser } = require("../utils/validator"); // Memanggil validator kamu
+const jwt = require("jsonwebtoken"); // Tambahkan ini (Pastikan sudah npm install jsonwebtoken)
 
 class UserController {
-  // 1. Ambil semua data user
-  async index(req, res) {
-    try {
-      const [rows] = await db.query("SELECT id, name, email, role FROM users");
-      
-      if (rows.length === 0) {
-        return res.status(404).json({ message: "Data user kosong" });
-      }
-
-      res.json({ 
+  // Ambil semua data user
+  index(req, res) {
+    User.getAll((err, results) => {
+      if (err) return errorHandler(res, err, 500, "Gagal ambil data user");
+      res.json({
         success: true,
-        message: "Berhasil ambil semua data user", 
-        data: rows 
+        message: "Berhasil ambil semua data user",
+        data: results
       });
-    } catch (err) {
-      return errorHandler(res, err, 500, "Gagal ambil data user");
-    }
+    });
   }
 
-  // 2. Tambah user baru (Register / Tambah Pasien)
-  async store(req, res) {
-    try {
-      const { name, email, password, role } = req.body;
+  // Tambah user baru (Register) dengan VALIDASI
+  store(req, res) {
+    const data = req.body;
+    
+    // SPRINT 6: Jalankan Validasi Input
+    const { isValid, errors } = validateUser(data);
+    if (!isValid) {
+      return res.status(400).json({ success: false, message: "Validasi gagal", errors });
+    }
 
-      // Validasi sederhana jika field kosong
-      if (!name || !email || !password) {
-        return res.status(400).json({ message: "Nama, Email, dan Password wajib diisi" });
-      }
-
-      const sql = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
-      const [result] = await db.execute(sql, [name, email, password, role || 'patient']);
-
-      res.status(201).json({ 
-        success: true,
+    User.create(data, (err, result) => {
+      if (err) return errorHandler(res, err, 500, "Gagal tambah user");
+      res.status(201).json({
+        success: true, 
         message: "User berhasil ditambahkan", 
-        data: { id: result.insertId, name, email, role: role || 'patient' } 
+        data: { id: result.insertId, ...data } 
       });
-    } catch (err) {
-      return errorHandler(res, err, 500, "Gagal tambah user");
-    }
+    });
   }
 
-  // 3. Fungsi Login
-  async login(req, res) {
-    try {
-      const { email, password } = req.body;
+  // Fungsi Login dengan VALIDASI & TOKEN (JWT)
+  login(req, res) {
+    const data = req.body;
 
-      if (!email || !password) {
-        return res.status(400).json({ message: "Email dan Password wajib diisi" });
+    // SPRINT 6: Jalankan Validasi Input Login
+    const { isValid, errors } = validateUser(data);
+    if (!isValid) {
+      return res.status(400).json({ success: false, message: "Validasi gagal", errors });
+    }
+
+    User.getByEmail(data.email, (err, results) => {
+      if (err) return errorHandler(res, err, 500, "Error Database");
+      if (results.length === 0) return res.status(401).json({ success: false, message: "Email atau password salah" });
+
+      const user = results[0];
+
+      // Cek Password (disini masih plain text sesuai kodingan kamu)
+      if (data.password !== user.password) {
+        return res.status(401).json({ success: false, message: "Email atau password salah" });
       }
 
-      const [rows] = await db.query("SELECT * FROM users WHERE email = ?", [email]);
-
-      if (rows.length === 0) {
-        return res.status(401).json({ message: "Email atau Password salah" });
-      }
-
-      const user = rows[0];
-
-      // Cek password (masih plain text sesuai kode lamamu)
-      if (password !== user.password) {
-        return res.status(401).json({ message: "Email atau Password salah" });
-      }
+      // SPRINT 6: Buat Token JWT
+      const token = jwt.sign(
+        { id: user.id, email: user.email, role: user.role || 'user' },
+        "SECRET_KEY_NISA_123", // Ini secret key kamu
+        { expiresIn: "1h" }
+      );
 
       res.json({ 
-        success: true,
+        success: true, 
         message: "Login berhasil!", 
-        data: { id: user.id, name: user.name, email: user.email, role: user.role } 
+        token: token, // Token ini yang akan di-test di Postman
+        data: { id: user.id, name: user.name, email: user.email } 
       });
-    } catch (err) {
-      return res.status(500).json({ message: "Error Database", error: err.message });
-    }
+    });
   }
 
-  // 4. Hapus user
-  async destroy(req, res) {
-    try {
-      const { id } = req.params;
-      
-      await db.execute("DELETE FROM users WHERE id = ?", [id]);
-
-      res.json({ 
-        success: true,
-        message: "User berhasil dihapus" 
-      });
-    } catch (err) {
-      return errorHandler(res, err, 500, "Gagal hapus user");
-    }
+  // Hapus user
+  destroy(req, res) {
+    const { id } = req.params;
+    User.delete(id, (err) => {
+      if (err) return errorHandler(res, err, 500, "Gagal hapus user");
+      res.json({ success: true, message: "User berhasil dihapus" });
+    });
   }
 }
 

@@ -3,6 +3,7 @@ const UserController = require("../controllers/UserController");
 const IndicatorController = require("../controllers/IndicatorController");
 const express = require("express");
 const router = express.Router();
+const verifyToken = require("../middleware/auth");
 
 // --- Hospital Routes ---
 router.get("/hospitals", HospitalController.index);
@@ -10,12 +11,17 @@ router.get("/hospitals/:id", HospitalController.show);
 router.post("/hospitals", HospitalController.store);
 router.put("/hospitals/:id", HospitalController.update);
 router.delete("/hospitals/:id", HospitalController.destroy);
-router.get("/stats", HospitalController.getStats);
+router.get("/hospitals", verifyToken, HospitalController.index);
 // --- User Routes ---
 router.get("/users", UserController.index);
 router.post("/users", UserController.store);
 router.delete("/users/:id", UserController.destroy);
+
+
+// Route untuk login
 router.post("/login", UserController.login);
+router.post("/users/register", (req, res) => UserController.store(req, res));
+router.post("/users/login", (req, res) => UserController.login(req, res));
 
 // --- Indicator Routes ---
 router.get("/indicators", IndicatorController.index);
