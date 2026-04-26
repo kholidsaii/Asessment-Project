@@ -1,18 +1,15 @@
-const db = require("../config/database"); // Menggunakan pool mysql2
 const Indicator = require("../models/Indicators");
 const { validateIndicator } = require("../utils/validator");
 const errorHandler = require("../utils/errorHandler");
 
 class IndicatorController {
 
-  index(req, res) {
-    Indicator.getAll((err, results) => {
-      if (err) {
-        return errorHandler(res, err, 500, "Gagal ambil data indikator");
-      }
-
+  async index(req, res) {
+    try {
+      const results = await Indicator.getAll();
+      
       if (results.length === 0) {
-        return errorHandler(res, "Data indikator kosong", 404, "Data indikator kosong");
+        return res.status(404).json({ success: false, message: "Data indikator kosong" });
       }
 
       res.json({
@@ -20,19 +17,18 @@ class IndicatorController {
         message: "Berhasil ambil semua indikator",
         data: results
       });
-    });
+    } catch (err) {
+      return errorHandler(res, err, 500, "Gagal ambil data indikator");
+    }
   }
 
-  show(req, res) {
-    const { id } = req.params;
-
-    Indicator.getById(id, (err, results) => {
-      if (err) {
-        return errorHandler(res, err, 500, "Gagal ambil detail indikator");
-      }
+  async show(req, res) {
+    try {
+      const { id } = req.params;
+      const results = await Indicator.getById(id);
 
       if (results.length === 0) {
-        return errorHandler(res, "Indikator tidak ditemukan", 404, "Indikator tidak ditemukan");
+        return res.status(404).json({ success: false, message: "Indikator tidak ditemukan" });
       }
 
       res.json({
@@ -40,66 +36,50 @@ class IndicatorController {
         message: "Detail indikator",
         data: results[0]
       });
-    });
+    } catch (err) {
+      return errorHandler(res, err, 500, "Gagal ambil detail indikator");
+    }
   }
 
-  store(req, res) {
-    const data = req.body;
+  async store(req, res) {
+    try {
+      const data = req.body;
+      const error = validateIndicator(data);
+      if (error) return errorHandler(res, error, 400, error);
 
-    // 🔥 VALIDATOR
-    const error = validateIndicator(data);
-    if (error) {
-      return errorHandler(res, error, 400, error);
-    }
-
-    Indicator.create(data, (err) => {
-      if (err) {
-        return errorHandler(res, err, 500, "Gagal tambah indikator");
-      }
-
+      const result = await Indicator.create(data);
       res.status(201).json({
         success: true,
         message: "Indikator berhasil ditambahkan",
-        data: data
+        data: { id: result.insertId, ...data }
       });
-    });
-  }
-
-  update(req, res) {
-    const { id } = req.params;
-    const data = req.body;
-
-    // 🔥 VALIDATOR
-    const error = validateIndicator(data);
-    if (error) {
-      return errorHandler(res, error, 400, error);
+    } catch (err) {
+      return errorHandler(res, err, 500, "Gagal tambah indikator");
     }
-
-    Indicator.update(id, data, (err) => {
-      if (err) {
-        return errorHandler(res, err, 500, "Gagal update indikator");
-      }
-
-      res.json({
-        success: true,
-        message: "Indikator berhasil diupdate"
-      });
-    });
   }
 
-  destroy(req, res) {
-    const { id } = req.params;
+  async update(req, res) {
+    try {
+      const { id } = req.params;
+      const data = req.body;
+      const error = validateIndicator(data);
+      if (error) return errorHandler(res, error, 400, error);
 
-    Indicator.delete(id, (err) => {
-      if (err) {
-        return errorHandler(res, err, 500, "Gagal hapus indikator");
-      }
+      await Indicator.update(id, data);
+      res.json({ success: true, message: "Indikator berhasil diupdate" });
+    } catch (err) {
+      return errorHandler(res, err, 500, "Gagal update indikator");
+    }
+  }
 
-      res.json({
-        success: true,
-        message: "Indikator berhasil dihapus"
-      });
-    });
+  async destroy(req, res) {
+    try {
+      const { id } = req.params;
+      await Indicator.delete(id);
+      res.json({ success: true, message: "Indikator berhasil dihapus" });
+    } catch (err) {
+      return errorHandler(res, err, 500, "Gagal hapus indikator");
+    }
   }
 }
 
