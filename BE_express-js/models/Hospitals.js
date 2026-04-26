@@ -1,32 +1,48 @@
-const db = require("../config/database");
+const db = require("../config/database"); // Pastikan path ke config database benar
 
 const Hospital = {
-
-  getAll: (callback)=>{
-    const sql = "SELECT * FROM hospitals";
-    db.query(sql, callback);
+  // Ambil semua data
+  getAll: async () => {
+    const [rows] = await db.query("SELECT * FROM hospitals");
+    return rows;
   },
 
-  getById: (id, callback)=>{
-    const sql = "SELECT * FROM hospitals WHERE id = ?";
-    db.query(sql, [id], callback);
+  // Ambil detail berdasarkan ID
+  getById: async (id) => {
+    const [rows] = await db.query("SELECT * FROM hospitals WHERE id = ?", [id]);
+    return rows;
   },
 
-  create: (data, callback)=>{
-    const sql = "INSERT INTO hospitals (name, code, class) VALUES (?, ?, ?)";
-    db.query(sql, [data.name, data.code, data.class], callback);
+  // Tambah hospital baru
+  create: async (data) => {
+    const sql = "INSERT INTO hospitals (name, code, class, address) VALUES (?, ?, ?, ?)";
+    const [result] = await db.execute(sql, [
+      data.name, 
+      data.code, 
+      data.class, 
+      data.address || ''
+    ]);
+    return result;
   },
 
-  update: (id, data, callback)=>{
-    const sql = "UPDATE hospitals SET name=?, code=?, class=? WHERE id=?";
-    db.query(sql, [data.name, data.code, data.class, id], callback);
+  // Update data hospital
+  update: async (id, data) => {
+    const sql = "UPDATE hospitals SET name=?, code=?, class=?, address=? WHERE id=?";
+    const [result] = await db.execute(sql, [
+      data.name, 
+      data.code, 
+      data.class, 
+      data.address, 
+      id
+    ]);
+    return result;
   },
 
-  delete: (id, callback)=>{
-    const sql = "DELETE FROM hospitals WHERE id=?";
-    db.query(sql, [id], callback);
+  // Hapus hospital
+  delete: async (id) => {
+    const [result] = await db.execute("DELETE FROM hospitals WHERE id=?", [id]);
+    return result;
   }
-
-}
+};
 
 module.exports = Hospital;
