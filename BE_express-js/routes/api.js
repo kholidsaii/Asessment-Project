@@ -5,14 +5,20 @@ const AssessmentController = require("../controllers/AssessmentController");
 const express = require("express");
 const router = express.Router();
 const verifyToken = require("../middleware/auth");
-
+const upload = require("../middleware/upload");
 // ==========================================
 // 1. PUBLIC ROUTES (Tanpa Login)
 // ==========================================
 router.post("/login", UserController.login);
 router.post("/users/register", UserController.store);
 router.post("/users/login", UserController.login);
-
+// Route Assessment dengan Foto Bukti
+router.post(
+  "/assessments", 
+  verifyToken(['admin', 'user']), 
+  upload.single("photo"), // "photo" adalah nama field di Postman 
+  AssessmentController.submitScore
+);
 // ==========================================
 // 2. PROTECTED ROUTES (Harus Login)
 // ==========================================
