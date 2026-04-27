@@ -1,22 +1,18 @@
 const mysql = require("mysql2");
 
-// Kita gunakan createPool karena lebih stabil untuk aplikasi web (multi-koneksi)
-const db = mysql.createPool({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "hospital_db",
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
+const db = mysql.createConnection({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME
 });
 
-// KUNCINYA DI SINI: Tambahkan .promise() agar bisa pakai await di Controller
-const poolPromise = db.promise();
+db.connect((err) => {
+  if (err) {
+    console.log("Koneksi gagal:", err);
+  } else {
+    console.log("Koneksi database berhasil");
+  }
+});
 
-// Tes koneksi di awal
-poolPromise.getConnection()
-  .then(() => console.log("Database Connected via Native MySQL (Promise)!"))
-  .catch((err) => console.error("Database connection failed:", err.message));
-
-module.exports = poolPromise;
+module.exports = db;

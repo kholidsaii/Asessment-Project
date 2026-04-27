@@ -1,17 +1,20 @@
 const db = require("../config/database");
 
 const Category = {
-  getAll: async () => {
-    const [rows] = await db.query("SELECT * FROM categories");
-    return rows;
+
+  getAll: (callback) => {
+    db.query("SELECT * FROM categories", callback);
   },
-  create: async (data) => {
-    const [result] = await db.execute(
-      "INSERT INTO categories (name, slug, `group`) VALUES (?, ?, ?)",
-      [data.name, data.slug, data.group]
-    );
-    return result;
+
+  create: (data, callback) => {
+    const sql = "INSERT INTO categories (name, slug, `group`) VALUES (?, ?, ?)";
+    db.query(sql, [
+      data.name,
+      data.slug,
+      data.group
+    ], callback);
   }
+
 };
 
 module.exports = Category;

@@ -1,48 +1,40 @@
-const db = require("../config/database"); // Pastikan path ke config database benar
+const db = require("../config/database");
 
 const Hospital = {
-  // Ambil semua data
-  getAll: async () => {
-    const [rows] = await db.query("SELECT * FROM hospitals");
-    return rows;
+
+  getAll: (callback) => {
+    db.query("SELECT * FROM hospitals", callback);
   },
 
-  // Ambil detail berdasarkan ID
-  getById: async (id) => {
-    const [rows] = await db.query("SELECT * FROM hospitals WHERE id = ?", [id]);
-    return rows;
+  getById: (id, callback) => {
+    db.query("SELECT * FROM hospitals WHERE id = ?", [id], callback);
   },
 
-  // Tambah hospital baru
-  create: async (data) => {
+  create: (data, callback) => {
     const sql = "INSERT INTO hospitals (name, code, class, address) VALUES (?, ?, ?, ?)";
-    const [result] = await db.execute(sql, [
-      data.name, 
-      data.code, 
-      data.class, 
-      data.address || ''
-    ]);
-    return result;
+    db.query(sql, [
+      data.name,
+      data.code,
+      data.class,
+      data.address
+    ], callback);
   },
 
-  // Update data hospital
-  update: async (id, data) => {
+  update: (id, data, callback) => {
     const sql = "UPDATE hospitals SET name=?, code=?, class=?, address=? WHERE id=?";
-    const [result] = await db.execute(sql, [
-      data.name, 
-      data.code, 
-      data.class, 
-      data.address, 
+    db.query(sql, [
+      data.name,
+      data.code,
+      data.class,
+      data.address,
       id
-    ]);
-    return result;
+    ], callback);
   },
 
-  // Hapus hospital
-  delete: async (id) => {
-    const [result] = await db.execute("DELETE FROM hospitals WHERE id=?", [id]);
-    return result;
+  delete: (id, callback) => {
+    db.query("DELETE FROM hospitals WHERE id=?", [id], callback);
   }
+
 };
 
 module.exports = Hospital;

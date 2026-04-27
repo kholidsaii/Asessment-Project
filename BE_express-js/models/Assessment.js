@@ -1,19 +1,24 @@
 const db = require("../config/database");
 
 const Assessment = {
-  // Simpan atau Update Skor
-  saveScore: async (data) => {
+
+  saveScore: (data, callback) => {
     const sql = `
-      INSERT INTO assessments (hospital_id, question_id, score) 
-      VALUES (?, ?, ?)
-      ON DUPLICATE KEY UPDATE score = VALUES(score)
+      INSERT INTO assessments (hospital_id, question_id, score, evidence_photo)
+      VALUES (?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE 
+        score = VALUES(score),
+        evidence_photo = VALUES(evidence_photo)
     `;
-    const [result] = await db.execute(sql, [data.hospital_id, data.question_id, data.score]);
-    return result;
+
+    db.query(
+      sql,
+      [data.hospital_id, data.question_id, data.score, data.evidence_photo],
+      callback
+    );
   },
 
-  // Ambil rekap per RS (Total Skor dan Rata-rata)
-  getSummaryByHospital: async (hospitalId) => {
+  getSummaryByHospital: (hospitalId, callback) => {
     const sql = `
       SELECT 
         h.name as hospital_name,
@@ -25,8 +30,8 @@ const Assessment = {
       WHERE h.id = ?
       GROUP BY h.id
     `;
-    const [rows] = await db.query(sql, [hospitalId]);
-    return rows[0];
+
+    db.query(sql, [hospitalId], callback);
   }
 };
 

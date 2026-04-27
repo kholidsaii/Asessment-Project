@@ -3,15 +3,15 @@ const errorHandler = require("../utils/errorHandler");
 const { validateHospital } = require("../utils/validator");
 
 class HospitalController {
-  // 1. Ambil Semua Data
-  async index(req, res) {
-    try {
-      const results = await Hospital.getAll();
-      
+
+  index(req, res) {
+    Hospital.getAll((err, results) => {
+      if (err) return errorHandler(res, err, 500, "Gagal ambil data");
+
       if (results.length === 0) {
-        return res.status(404).json({ 
-          success: false, 
-          message: "Data hospital kosong" 
+        return res.status(404).json({
+          success: false,
+          message: "Data hospital kosong"
         });
       }
 
@@ -20,21 +20,19 @@ class HospitalController {
         message: "Berhasil ambil semua data hospital",
         data: results
       });
-    } catch (err) {
-      return errorHandler(res, err, 500, "Gagal ambil data hospital");
-    }
+    });
   }
 
-  // 2. Detail Hospital
-  async show(req, res) {
-    try {
-      const { id } = req.params;
-      const results = await Hospital.getById(id);
+  show(req, res) {
+    const { id } = req.params;
+
+    Hospital.getById(id, (err, results) => {
+      if (err) return errorHandler(res, err, 500);
 
       if (results.length === 0) {
-        return res.status(404).json({ 
-          success: false, 
-          message: "Hospital tidak ditemukan" 
+        return res.status(404).json({
+          success: false,
+          message: "Hospital tidak ditemukan"
         });
       }
 
@@ -43,74 +41,66 @@ class HospitalController {
         message: "Detail hospital",
         data: results[0]
       });
-    } catch (err) {
-      return errorHandler(res, err, 500, "Gagal ambil detail hospital");
-    }
+    });
   }
 
-  // 3. Simpan Data (Create)
-  async store(req, res) {
-    try {
-      const data = req.body;
-      const { isValid, errors } = validateHospital(data);
+  store(req, res) {
+    const data = req.body;
 
-      if (!isValid) {
-        return res.status(400).json({ 
-          success: false, 
-          message: "Validasi input gagal", 
-          errors 
-        });
-      }
+    const { isValid, errors } = validateHospital(data);
+    if (!isValid) {
+      return res.status(400).json({
+        success: false,
+        message: "Validasi gagal",
+        errors
+      });
+    }
 
-      const result = await Hospital.create(data);
+    Hospital.create(data, (err, result) => {
+      if (err) return errorHandler(res, err, 500);
+
       res.status(201).json({
         success: true,
         message: "Hospital berhasil ditambahkan",
         data: { id: result.insertId, ...data }
       });
-    } catch (err) {
-      return errorHandler(res, err, 500, "Gagal tambah hospital");
-    }
+    });
   }
 
-  // 4. Update Data
-  async update(req, res) {
-    try {
-      const { id } = req.params;
-      const data = req.body;
-      const { isValid, errors } = validateHospital(data);
+  update(req, res) {
+    const { id } = req.params;
+    const data = req.body;
 
-      if (!isValid) {
-        return res.status(400).json({ 
-          success: false, 
-          message: "Validasi input gagal", 
-          errors 
-        });
-      }
+    const { isValid, errors } = validateHospital(data);
+    if (!isValid) {
+      return res.status(400).json({
+        success: false,
+        message: "Validasi gagal",
+        errors
+      });
+    }
 
-      await Hospital.update(id, data);
+    Hospital.update(id, data, (err) => {
+      if (err) return errorHandler(res, err, 500);
+
       res.json({
         success: true,
         message: "Hospital berhasil diupdate"
       });
-    } catch (err) {
-      return errorHandler(res, err, 500, "Gagal update hospital");
-    }
+    });
   }
 
-  // 5. Hapus Data
-  async destroy(req, res) {
-    try {
-      const { id } = req.params;
-      await Hospital.delete(id);
-      
+  destroy(req, res) {
+    const { id } = req.params;
+
+    Hospital.delete(id, (err) => {
+      if (err) return errorHandler(res, err, 500);
+
       res.json({
         success: true,
         message: "Hospital berhasil dihapus"
       });
-    } catch (err) {
-      return errorHandler(res, err, 500, "Gagal hapus hospital");
-    }
+    });
   }
 }
 

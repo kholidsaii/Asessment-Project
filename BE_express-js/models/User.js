@@ -1,29 +1,34 @@
-const db = require("../config/database"); // Pastikan path ke config db benar
+const db = require("../config/database");
 
 const User = {
-  getAll: async () => {
-    const [rows] = await db.query("SELECT id, name, email, role, createdAt FROM users");
-    return rows;
+  getAll: (callback) => {
+    const sql = "SELECT id, name, email, role, createdAt FROM users";
+    db.query(sql, callback);
   },
 
-  getByEmail: async (email) => {
-    const [rows] = await db.query("SELECT * FROM users WHERE email = ?", [email]);
-    return rows;
+  getById: (id, callback) => {
+    const sql = "SELECT id, name, email, role, createdAt FROM users WHERE id = ?";
+    db.query(sql, [id], callback);
   },
 
-  create: async (data) => {
+  getByEmail: (email, callback) => {
+    const sql = "SELECT * FROM users WHERE email = ?";
+    db.query(sql, [email], callback);
+  },
+
+  create: (data, callback) => {
     const sql = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
-    const [result] = await db.execute(sql, [
-      data.name, 
-      data.email, 
-      data.password, 
-      data.role || 'user'
-    ]);
-    return result;
+    db.query(sql, [
+      data.name,
+      data.email,
+      data.password,
+      data.role || "user"
+    ], callback);
   },
 
-  delete: async (id) => {
-    return await db.execute("DELETE FROM users WHERE id = ?", [id]);
+  delete: (id, callback) => {
+    const sql = "DELETE FROM users WHERE id = ?";
+    db.query(sql, [id], callback);
   }
 };
 

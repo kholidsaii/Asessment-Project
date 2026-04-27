@@ -1,33 +1,22 @@
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
+const errorHandler = require("../utils/errorHandler");
 
-const verifyToken = (roles = []) => {
-  return (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+function auth(req, res, next) {
+  const bearer = req.headers.authorization;
 
-    if (!token) {
-      return res.status(403).json({ success: false, message: "Token tidak ditemukan!" });
-    }
+  if (!bearer) {
+    return errorHandler(res, "Unauthorized", 401, "Token tidak ditemukan");
+  }
 
-    try {
-      // Ambil secret dari .env
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = decoded;
+  const token = bearer.split(" ")[1];
 
-      // Logika pembatasan ROLE
-      // Jika roles diisi (misal: ['admin']), cek apakah role user cocok
-      if (roles.length && !roles.includes(decoded.role)) {
-        return res.status(401).json({ 
-          success: false, 
-          message: `Akses ditolak! Akun Anda (${decoded.role}) tidak punya izin.` 
-        });
-      }
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    return errorHandler(res, err, 401, "Token tidak valid");
+  }
+}
 
-      next();
-    } catch (err) {
-      return res.status(401).json({ success: false, message: "Token tidak valid atau sudah kadaluwarsa!" });
-    }
-  };
-};
-
-module.exports = verifyToken;
+module.exports = auth;

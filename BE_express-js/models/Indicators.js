@@ -1,33 +1,29 @@
 const db = require("../config/database");
 
 const Indicator = {
-  getAll: async () => {
-    // MySQL2 Promise mengembalikan array [rows, fields]
-    const [rows] = await db.query("SELECT * FROM indicators");
-    return rows;
+
+  getAll: (callback) => {
+    db.query("SELECT * FROM indicators", callback);
   },
-  
-  getById: async (id) => {
-    const [rows] = await db.query("SELECT * FROM indicators WHERE id=?", [id]);
-    return rows;
+
+  getById: (id, callback) => {
+    db.query("SELECT * FROM indicators WHERE id=?", [id], callback);
   },
-  
-  create: async (data) => {
+
+  create: (data, callback) => {
     const sql = "INSERT INTO indicators (name, description) VALUES (?, ?)";
-    const [result] = await db.execute(sql, [data.name, data.description]);
-    return result;
+    db.query(sql, [data.name, data.description], callback);
   },
-  
-  update: async (id, data) => {
-    const sql = "UPDATE indicators SET name = ?, description = ? WHERE id = ?";
-    const [result] = await db.execute(sql, [data.name, data.description, id]);
-    return result;
+
+  update: (id, data, callback) => {
+    const sql = "UPDATE indicators SET name=?, description=? WHERE id=?";
+    db.query(sql, [data.name, data.description, id], callback);
   },
-  
-  delete: async (id) => {
-    const [result] = await db.execute("DELETE FROM indicators WHERE id=?", [id]);
-    return result;
+
+  delete: (id, callback) => {
+    db.query("DELETE FROM indicators WHERE id=?", [id], callback);
   }
+
 };
 
 module.exports = Indicator;

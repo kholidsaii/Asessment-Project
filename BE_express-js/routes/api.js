@@ -1,53 +1,36 @@
-const HospitalController = require("../controllers/HospitalController");
-const UserController = require("../controllers/UserController");
-const IndicatorController = require("../controllers/IndicatorController");
-const AssessmentController = require("../controllers/AssessmentController");
 const express = require("express");
 const router = express.Router();
-const verifyToken = require("../middleware/auth");
-const upload = require("../middleware/upload");
-// ==========================================
-// 1. PUBLIC ROUTES (Tanpa Login)
-// ==========================================
-router.post("/login", UserController.login);
-router.post("/users/register", UserController.store);
-router.post("/users/login", UserController.login);
-// Route Assessment dengan Foto Bukti
-router.post(
-  "/assessments", 
-  verifyToken(['admin', 'user']), 
-  upload.single("photo"), // "photo" adalah nama field di Postman 
-  AssessmentController.submitScore
-);
-// ==========================================
-// 2. PROTECTED ROUTES (Harus Login)
-// ==========================================
 
-// --- Hospital Routes ---
-// Semua yang login bisa lihat
-router.get("/hospitals", verifyToken(), HospitalController.index);
-router.get("/hospitals/:id", verifyToken(), HospitalController.show);
-// Hanya Admin
-router.post("/hospitals", verifyToken(['admin']), HospitalController.store);
-router.put("/hospitals/:id", verifyToken(['admin']), HospitalController.update);
-router.delete("/hospitals/:id", verifyToken(['admin']), HospitalController.destroy);
+const AuthController = require("../controllers/AuthController");
+const HospitalController = require("../controllers/HospitalController");
+const IndicatorController = require("../controllers/IndicatorController");
+const UserController = require("../controllers/UserController");
 
-// --- Assessment Routes ---
-// Admin & User bisa isi asessment
-router.post("/assessments", verifyToken(['admin', 'user']), AssessmentController.submitScore);
-router.get("/assessments/report/:hospital_id", verifyToken(), AssessmentController.getHospitalReport);
+const auth = require("../middleware/auth");
+const authorize = require("../middleware/authorize");
 
-// --- Indicator Routes ---
-// Semua yang login bisa lihat indikator
-router.get("/indicators", verifyToken(), IndicatorController.index);
-router.get("/indicators/:id", verifyToken(), IndicatorController.show);
-// Hanya Admin yang bisa atur indikator
-router.post("/indicators", verifyToken(['admin']), IndicatorController.store);
-router.put("/indicators/:id", verifyToken(['admin']), IndicatorController.update);
-router.delete("/indicators/:id", verifyToken(['admin']), IndicatorController.destroy);
+// ================= AUTH =================
+router.post("/register", (req, res) => AuthController.register(req, res));
+router.post("/login", (req, res) => AuthController.login(req, res));
 
-// --- User Management (Admin Only) ---
-router.get("/users", verifyToken(['admin']), UserController.index);
-router.delete("/users/:id", verifyToken(['admin']), UserController.destroy);
+// ================= HOSPITAL =================
+router.get("/hospitals", auth, (req,res)=>HospitalController.index(req,res));
+router.get("/hospitals/:id", auth, (req,res)=>HospitalController.show(req,res));
+
+router.post("/hospitals", auth, authorize("admin"), (req,res)=>HospitalController.store(req,res));
+router.put("/hospitals/:id", auth, authorize("admin"), (req,res)=>HospitalController.update(req,res));
+router.delete("/hospitals/:id", auth, authorize("admin"), (req,res)=>HospitalController.destroy(req,res));
+
+// ================= INDICATOR =================
+router.get("/indicators", auth, (req,res)=>IndicatorController.index(req,res));
+router.get("/indicators/:id", auth, (req,res)=>IndicatorController.show(req,res));
+
+router.post("/indicators", auth, authorize("admin"), (req,res)=>IndicatorController.store(req,res));
+router.put("/indicators/:id", auth, authorize("admin"), (req,res)=>IndicatorController.update(req,res));
+router.delete("/indicators/:id", auth, authorize("admin"), (req,res)=>IndicatorController.destroy(req,res));
+
+// ================= USER (ADMIN ONLY) =================
+router.get("/users", auth, authorize("admin"), (req,res)=>UserController.index(req,res));
+router.delete("/users/:id", auth, authorize("admin"), (req,res)=>UserController.destroy(req,res));
 
 module.exports = router;
