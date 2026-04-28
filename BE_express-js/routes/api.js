@@ -33,4 +33,11 @@ router.delete("/indicators/:id", auth, authorize("admin"), (req,res)=>IndicatorC
 router.get("/users", auth, authorize("admin"), (req,res)=>UserController.index(req,res));
 router.delete("/users/:id", auth, authorize("admin"), (req,res)=>UserController.destroy(req,res));
 
+// ================= Category =================
+const CategoryController = require("../controllers/CategoryController");
+
+//Tambahkan Route Kategori di bagian bawah
+router.get("/categories", auth, (req, res) => CategoryController.index(req, res));
+router.post("/categories", auth, authorize("admin"), (req, res) => CategoryController.store(req, res));
+
 module.exports = router;
