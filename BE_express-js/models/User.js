@@ -2,12 +2,12 @@ const db = require("../config/database");
 
 const User = {
   getAll: (callback) => {
-    const sql = "SELECT id, name, email, role, createdAt FROM users";
+    const sql = "SELECT id, name, email, role FROM users";
     db.query(sql, callback);
   },
 
   getById: (id, callback) => {
-    const sql = "SELECT id, name, email, role, createdAt FROM users WHERE id = ?";
+    const sql = "SELECT id, name, email, role FROM users WHERE id = ?";
     db.query(sql, [id], callback);
   },
 
