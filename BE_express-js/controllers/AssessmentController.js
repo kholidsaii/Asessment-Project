@@ -11,7 +11,7 @@ class AssessmentController {
     const { hospital_id, question_id, score } = req.body;
 
     // Validasi basic input
-    if (!hospital_id || !question_id || score === undefined) {
+    if (!hospital_id || !question_id || score === undefined || isNaN(score)) {
       return errorHandler(res, "Data tidak lengkap", 400, "Data tidak lengkap");
     }
 
@@ -22,11 +22,11 @@ class AssessmentController {
     }
 
     // Ambil nama file
-    const evidence_photo = req.file ? req.file.filename : null;
+    const photo = req.file ? req.file.filename : null;
 
     // Simpan ke database (pakai callback style)
     Assessment.saveScore(
-      { hospital_id, question_id, score, evidence_photo },
+      { hospital_id, question_id, score, photo },
       (err, result) => {
         if (err) {
           return errorHandler(res, err, 500, "Gagal menyimpan skor assessment");
@@ -39,7 +39,7 @@ class AssessmentController {
             hospital_id,
             question_id,
             score,
-            photo: evidence_photo
+            photo: photo
           }
         });
       }

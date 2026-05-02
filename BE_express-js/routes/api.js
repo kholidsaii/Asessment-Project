@@ -1,13 +1,34 @@
 const express = require("express");
 const router = express.Router();
 
+const AssessmentController = require("../controllers/AssessmentController");
 const AuthController = require("../controllers/AuthController");
 const HospitalController = require("../controllers/HospitalController");
 const IndicatorController = require("../controllers/IndicatorController");
 const UserController = require("../controllers/UserController");
+const QuestionController = require("../controllers/QuestionController");
+const CategoryController = require("../controllers/CategoryController");
 
 const auth = require("../middleware/auth");
 const authorize = require("../middleware/authorize");
+const upload = require("../middleware/upload");
+
+// ================= Assesment =================
+router.post("/assessments", auth, upload.single("photo"), (req,res)=>
+  AssessmentController.submitScore(req,res)
+);
+router.get("/assessments/report/:hospital_id", auth, (req,res)=>
+  AssessmentController.getHospitalReport(req,res)
+);
+
+// ================= QUESTION =================
+router.get("/questions", auth, (req,res)=>
+  QuestionController.index(req,res)
+);
+
+router.post("/questions", auth, authorize("admin"), (req,res)=>
+  QuestionController.store(req,res)
+);
 
 // ================= AUTH =================
 router.post("/register", (req, res) => AuthController.register(req, res));
@@ -34,7 +55,7 @@ router.get("/users", auth, authorize("admin"), (req,res)=>UserController.index(r
 router.delete("/users/:id", auth, authorize("admin"), (req,res)=>UserController.destroy(req,res));
 
 // ================= Category =================
-const CategoryController = require("../controllers/CategoryController");
+
 
 //Tambahkan Route Kategori di bagian bawah
 router.get("/categories", auth, (req, res) => CategoryController.index(req, res));

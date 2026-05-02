@@ -4,16 +4,16 @@ const Assessment = {
 
   saveScore: (data, callback) => {
     const sql = `
-      INSERT INTO assessments (hospital_id, question_id, score, evidence_photo)
+      INSERT INTO assessments (hospital_id, question_id, score, photo)
       VALUES (?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE 
         score = VALUES(score),
-        evidence_photo = VALUES(evidence_photo)
+        photo = VALUES(photo)
     `;
 
     db.query(
       sql,
-      [data.hospital_id, data.question_id, data.score, data.evidence_photo],
+      [data.hospital_id, data.question_id, data.score, data.photo],
       callback
     );
   },

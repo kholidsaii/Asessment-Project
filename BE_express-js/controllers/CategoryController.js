@@ -18,8 +18,8 @@ class CategoryController {
   store(req, res) {
     const data = req.body; // { name: "Umum" }
     
-    if (!data.name) {
-      return res.status(400).json({ success: false, message: "Nama kategori wajib diisi" });
+    if (!data.name || !data.slug || !data.group) {
+      return res.status(400).json({ success: false, message: "Nama, slug, dan group kategori wajib diisi" });
     }
 
     Category.create(data, (err, result) => {
