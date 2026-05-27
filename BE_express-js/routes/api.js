@@ -48,28 +48,35 @@ router.get("/hospitals/stats", (req, res) => {
 });
 
 // Rute hospital lainnya (tetap dikunci bawaan tim)
-router.get("/hospitals", auth, (req,res)=>HospitalController.index(req,res));
-router.get("/hospitals/:id", auth, (req,res)=>HospitalController.show(req,res));
+// router.get("/hospitals", auth, (req,res)=>HospitalController.index(req,res));
+router.get("/hospitals", (req,res)=>HospitalController.index(req,res));
+// router.get("/hospitals/:id", auth, (req,res)=>HospitalController.show(req,res));
+router.get("/hospitals/:id", (req,res)=>HospitalController.show(req,res));
 
-router.post("/hospitals", auth, authorize("admin"), (req,res)=>HospitalController.store(req,res));
-router.put("/hospitals/:id", auth, authorize("admin"), (req,res)=>HospitalController.update(req,res));
-router.delete("/hospitals/:id", auth, authorize("admin"), (req,res)=>HospitalController.destroy(req,res));
+// router.post("/hospitals", auth, authorize("admin"), (req,res)=>HospitalController.store(req,res));
+// router.put("/hospitals/:id", auth, authorize("admin"), (req,res)=>HospitalController.update(req,res));
+// router.delete("/hospitals/:id", auth, authorize("admin"), (req,res)=>HospitalController.destroy(req,res));
 
 // ================= INDICATOR =================
-router.get("/indicators", auth, (req,res)=>IndicatorController.index(req,res));
-router.get("/indicators/:id", auth, (req,res)=>IndicatorController.show(req,res));
+// router.get("/indicators", auth, (req,res)=>IndicatorController.index(req,res));
+// router.get("/indicators/:id", auth, (req,res)=>IndicatorController.show(req,res));
+router.get("/indicators", (req,res)=>IndicatorController.index(req,res));
+router.get("/indicators/:id", (req,res)=>IndicatorController.show(req,res));
 
-router.post("/indicators", auth, authorize("admin"), (req,res)=>IndicatorController.store(req,res));
-router.put("/indicators/:id", auth, authorize("admin"), (req,res)=>IndicatorController.update(req,res));
-router.delete("/indicators/:id", auth, authorize("admin"), (req,res)=>IndicatorController.destroy(req,res));
+
+// router.post("/indicators", auth, authorize("admin"), (req,res)=>IndicatorController.store(req,res));
+// router.put("/indicators/:id", auth, authorize("admin"), (req,res)=>IndicatorController.update(req,res));
+// router.delete("/indicators/:id", auth, authorize("admin"), (req,res)=>IndicatorController.destroy(req,res));
 
 // ================= USER (ADMIN ONLY) =================
-router.get("/users", auth, authorize("admin"), (req,res)=>UserController.index(req,res));
+// router.get("/users", auth, authorize("admin"), (req,res)=>UserController.index(req,res));
+router.get("/users", (req,res)=>UserController.index(req,res));
 router.delete("/users/:id", auth, authorize("admin"), (req,res)=>UserController.destroy(req,res));
 
 // ================= Category =================
 //Tambahkan Route Kategori di bagian bawah
-router.get("/categories", auth, (req, res) => CategoryController.index(req, res));
+// router.get("/categories", auth, (req, res) => CategoryController.index(req, res));
+router.get("/categories", (req, res) => CategoryController.index(req, res));
 router.post("/categories", auth, authorize("admin"), (req, res) => CategoryController.store(req, res));
 
 module.exports = router;

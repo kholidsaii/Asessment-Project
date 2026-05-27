@@ -1,23 +1,54 @@
 import { useEffect, useState } from "react";
-import api from "../api/api";
+
+import http from "../utils/constant/http";
+
 import IndicatorTable from "../components/IndicatorTable/IndicatorTable";
 
 function IndicatorPage() {
+
   const [indicators, setIndicators] = useState([]);
 
-  async function fetchIndicators() {
-    const res = await api.get("/indicators");
-    setIndicators(res.data.data);
-  }
+  const [loading, setLoading] = useState(true);
+
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchIndicators();
   }, []);
 
+  async function fetchIndicators() {
+    try {
+
+      setLoading(true);
+      setError(null);
+
+      const response = await http.get("/indicators");
+
+      setIndicators(response.data.data);
+
+    } catch (error) {
+
+      setError(error.message);
+
+    } finally {
+
+      setLoading(false);
+
+    }
+  }
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (error) {
+    return <p>Error : {error}</p>;
+  }
+
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-5">
-        Data Indikator
+      <h1 className="text-2xl font-bold mb-5">
+        Data Indicator
       </h1>
 
       <IndicatorTable indicators={indicators} />
