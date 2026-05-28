@@ -1,22 +1,25 @@
 import { useState, useEffect } from "react";
 import api from "../utils/constant/http";
+import HospitalTable from "../components/HospitalTable/HospitalTable";
 
 function HospitalPage() {
   const [hospitals, setHospitals] = useState([]);
-
   const [loading, setLoading] = useState(true);
-
   const [error, setError] = useState(null);
 
   async function fetchHospitals() {
     try {
       setLoading(true);
+      setError(null); // Reset error setiap kali fetch ulang
 
       const res = await api.get("/hospitals");
 
+      // Pastikan menyesuaikan dengan struktur response API Anda
       setHospitals(res.data.data || []);
     } catch (err) {
       console.error("Gagal ambil data:", err);
+      // Tangkap pesan error dan masukkan ke state agar UI Error muncul
+      setError(err.response?.data?.message || err.message || "Gagal mengambil data dari server");
       setHospitals([]);
     } finally {
       setLoading(false);
@@ -27,94 +30,47 @@ function HospitalPage() {
     fetchHospitals();
   }, []);
 
-  // LOADING
+  // 1. TAMPILAN LOADING
   if (loading) {
     return (
-      <div className="p-8">
-        <p className="text-blue-600">Loading data rumah sakit...</p>
+      <div className="flex items-center justify-center p-20 text-slate-500">
+        <p className="animate-pulse text-blue-600 font-medium">Loading data rumah sakit...</p>
       </div>
     );
   }
 
-  // ERROR
+  // 2. TAMPILAN ERROR
   if (error) {
     return (
-      <div className="p-8">
-        <p className="text-red-600">
-          Error: {error}
-        </p>
+      <div className="bg-red-50 text-red-600 border border-red-200 rounded-xl p-5 mb-6">
+        <p className="font-semibold text-lg mb-1">Terjadi Kesalahan</p>
+        <p>{error}</p>
       </div>
     );
   }
 
+  // 3. TAMPILAN SUKSES
   return (
-    <div className="p-8">
-      <h2 className="text-2xl font-bold mb-6">
-        Data Rumah Sakit
-      </h2>
-
-      <div className="bg-white rounded-xl shadow border overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-4 text-left">Nama</th>
-              <th className="p-4 text-left">Kode</th>
-              <th className="p-4 text-left">Kelas</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {hospitals.map((hospital) => (
-              <tr key={hospital.id}>
-                <td className="p-4">
-                  {hospital.name}
-                </td>
-
-                <td className="p-4">
-                  {hospital.code}
-                </td>
-
-                <td className="p-4">
-                  {hospital.class}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-slate-800">
+          Data Rumah Sakit
+        </h1>
+        <p className="text-slate-500 mt-2">
+          Daftar rumah sakit yang terintegrasi di dalam sistem manajemen
+        </p>
       </div>
+
+      {hospitals.length === 0 ? (
+        <div className="bg-white rounded-2xl p-10 text-center text-slate-400 border border-dashed">
+          Tidak ada data rumah sakit yang ditemukan.
+        </div>
+      ) : (
+        /* Menggunakan ulang komponen tabel agar rapi */
+        <HospitalTable hospitals={hospitals} />
+      )}
     </div>
   );
 }
 
 export default HospitalPage;
-
-
-
-// import { useEffect, useState } from "react";
-// import api from "../utils/constant/http";
-// import HospitalTable from "../components/HospitalTable/HospitalTable";
-
-// function HospitalPage() {
-//   const [hospitals, setHospitals] = useState([]);
-
-//   async function fetchHospitals() {
-//     const res = await api.get("/hospitals");
-//     setHospitals(res.data.data);
-//   }
-
-//   useEffect(() => {
-//     fetchHospitals();
-//   }, []);
-
-//   return (
-//     <div>
-//       <h1 className="text-3xl font-bold mb-5">
-//         Data Rumah Sakit
-//       </h1>
-
-//       <HospitalTable hospitals={hospitals} />
-//     </div>
-//   );
-// }
-
-// export default HospitalPage;
