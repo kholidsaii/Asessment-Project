@@ -17,8 +17,23 @@ function RegisterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // 1. Validasi Kolom Kosong
     if (!name || !email || !password) {
       setError("Semua kolom wajib diisi");
+      return;
+    }
+
+    // === PENAMBAHAN BARU SPRINT 11: VALIDASI FORMAT EMAIL ===
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      setError("Format email tidak valid. Gunakan format contoh: nama@rumahsakit.com");
+      return;
+    }
+
+    // === PENAMBAHAN BARU SPRINT 11: VALIDASI PANJANG PASSWORD ===
+    if (password.length < 6) {
+      setError("Keamanan Password: Password minimal harus memiliki 6 karakter.");
       return;
     }
 

@@ -15,7 +15,7 @@ import {
 /**
  * Komponen LoginPage
  * Menangani proses otentikasi user (Admin maupun Perawat/Staf)
- * * @param {Object} props
+ * @param {Object} props
  * @param {Function} props.onLoginSuccess - Callback ketika login berhasil untuk update state global di App.jsx
  */
 function LoginPage({ onLoginSuccess }) {
@@ -61,6 +61,12 @@ function LoginPage({ onLoginSuccess }) {
       return;
     }
 
+    // === PENAMBAHAN BARU SPRINT 11: VALIDASI PANJANG PASSWORD ===
+    if (password.length < 6) {
+      setError("Keamanan akun: Password minimal harus memiliki 6 karakter.");
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -95,7 +101,6 @@ function LoginPage({ onLoginSuccess }) {
       console.error("Login error detail:", err);
       
       // 4. Menangkap response error terstruktur dari backend (errorHandler)
-      // Jika server mati atau tidak merespons, berikan pesan fallback
       const errorMessage = err.response?.data?.message 
         || err.message 
         || "Gagal terhubung ke server. Silakan coba beberapa saat lagi.";
@@ -269,11 +274,9 @@ function LoginPage({ onLoginSuccess }) {
           KOLOM KANAN: DEKORASI (Hanya terlihat di layar LG ke atas)
           ========================================= */}
       <div className="hidden lg:flex w-1/2 bg-blue-600 relative overflow-hidden flex-col justify-between p-12">
-        {/* Ornamen Latar Belakang Lingkaran Abstrak */}
         <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-pulse"></div>
         <div className="absolute bottom-[-10%] left-[-10%] w-96 h-96 bg-blue-700 rounded-full mix-blend-multiply filter blur-3xl opacity-70"></div>
 
-        {/* Konten Atas Kanan: Logo / Branding App */}
         <div className="relative z-10 flex items-center gap-3 text-white">
           <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center">
             <Hospital size={24} className="text-white" />
@@ -281,7 +284,6 @@ function LoginPage({ onLoginSuccess }) {
           <span className="text-3xl font-extrabold tracking-tight">SIMRS Dev</span>
         </div>
 
-        {/* Konten Tengah Kanan: Value Proposition */}
         <div className="relative z-10 text-white max-w-lg">
           <div className="w-16 h-1 bg-blue-400 mb-8 rounded-full"></div>
           <h2 className="text-4xl font-bold mb-6 leading-tight">
@@ -297,7 +299,6 @@ function LoginPage({ onLoginSuccess }) {
           </div>
         </div>
 
-        {/* Konten Bawah Kanan: Info Modul */}
         <div className="relative z-10 grid grid-cols-2 gap-6 mt-12 border-t border-blue-500/30 pt-8">
           <div>
             <h4 className="text-white font-bold text-xl mb-1">Cepat & Akurat</h4>
