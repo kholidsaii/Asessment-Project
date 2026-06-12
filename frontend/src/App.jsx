@@ -5,6 +5,7 @@ import Sidebar from "./components/Sidebar/Sidebar";
 import Home from "./pages/Home";
 import HospitalPage from "./pages/HospitalPage";
 import IndicatorPage from "./pages/IndicatorPage";
+import IndicatorFormPage from "./pages/IndicatorFormPage"; // 1. IMPORT FILE FORM BARU YANG KITA BUAT
 import PatientPage from "./pages/PatientPage";
 import AssessmentPage from "./pages/AssessmentPage";
 import ReportPage from "./pages/ReportPage";
@@ -71,6 +72,11 @@ function App() {
                       <>
                         <Route path="/hospitals" element={<HospitalPage />} />
                         <Route path="/indicators" element={<IndicatorPage />} />
+                        
+                        {/* 2. DAFTARKAN DUA JALUR RUTE FORM CRUD DI SINI (DI BAWAH /indicators) */}
+                        <Route path="/indicators/new" element={<IndicatorFormPage />} />
+                        <Route path="/indicators/edit/:id" element={<IndicatorFormPage />} />
+                        
                         <Route path="/patients" element={<PatientPage />} />
                       </>
                     ) : (
