@@ -1,53 +1,66 @@
-import { Edit, Trash2 } from "lucide-react"; 
-
-function PatientTable({ patients, onEdit, onDelete }) {
+function PatientTable({ patients = [], onEdit, onDelete }) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
-      <table className="w-full text-left border-collapse">
-        <thead className="bg-slate-100">
-          <tr>
-            <th className="p-4 font-semibold text-slate-700">Nama</th>
-            <th className="p-4 font-semibold text-slate-700">Email</th>
-            <th className="p-4 font-semibold text-slate-700">Role</th>
-            <th className="p-4 font-semibold text-slate-700 text-center">Aksi</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-100">
-          {patients.map((item) => (
-            <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-              <td className="p-4 font-medium text-slate-800">{item.name}</td>
-              <td className="p-4 text-slate-600">{item.email}</td>
-              <td className="p-4">
-                <span 
-                  className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                    item.role === 'admin' 
-                      ? 'bg-purple-100 text-purple-700 border border-purple-200' 
-                      : 'bg-green-100 text-green-700 border border-green-200'
-                  }`}
-                >
-                  {item.role || 'User'}
-                </span>
-              </td>
-              <td className="p-4">
-                <div className="flex justify-center gap-2">
-                  <button
-                    onClick={() => onEdit(item.id)}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg transition-colors font-medium text-sm"
-                  >
-                    <Edit size={16} /> Edit
-                  </button>
-                  <button
-                    onClick={() => onDelete(item.id)}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors font-medium text-sm"
-                  >
-                    <Trash2 size={16} /> Hapus
-                  </button>
-                </div>
-              </td>
+    <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-slate-100 text-xs uppercase tracking-wide text-slate-500">
+            <tr>
+              <th className="px-5 py-4">No</th>
+              <th className="px-5 py-4">Nama</th>
+              <th className="px-5 py-4">Email</th>
+              <th className="px-5 py-4">Role</th>
+              <th className="px-5 py-4">Rumah Sakit</th>
+              <th className="px-5 py-4 text-right">Aksi</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody className="divide-y divide-slate-100">
+            {patients.length === 0 ? (
+              <tr>
+                <td colSpan="6" className="px-5 py-8 text-center text-slate-400">
+                  Belum ada data user.
+                </td>
+              </tr>
+            ) : (
+              patients.map((item, index) => (
+                <tr key={item.id} className="hover:bg-slate-50">
+                  <td className="px-5 py-4 font-semibold text-slate-500">{index + 1}</td>
+                  <td className="px-5 py-4 font-semibold text-slate-800">{item.name}</td>
+                  <td className="px-5 py-4 text-slate-600">{item.email}</td>
+                  <td className="px-5 py-4">
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-bold ${
+                        item.role === "admin"
+                          ? "bg-purple-50 text-purple-700"
+                          : "bg-blue-50 text-blue-700"
+                      }`}
+                    >
+                      {item.role}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 text-slate-600">{item.hospital_name || "-"}</td>
+                  <td className="px-5 py-4">
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => onEdit(item)}
+                        className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700 hover:bg-amber-100"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => onDelete(item.id, item.name)}
+                        className="rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-100"
+                      >
+                        Hapus
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

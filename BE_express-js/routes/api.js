@@ -30,13 +30,19 @@ router.get("/assessments/report/:hospital_id", auth, (req, res) =>
 );
 
 // ================= DASHBOARD CHARTS =================
-router.get("/dashboard/admin/charts", auth, authorize("admin"), (req, res) =>
-  AssessmentController.getAdminCharts(req, res)
-);
+// Route ini aman jika kamu sudah memakai patch grafik. Kalau controller belum punya method ini,
+// jangan panggil URL ini dari frontend atau gunakan patch grafik dashboard sebelumnya.
+if (typeof AssessmentController.getAdminCharts === "function") {
+  router.get("/dashboard/admin/charts", auth, authorize("admin"), (req, res) =>
+    AssessmentController.getAdminCharts(req, res)
+  );
+}
 
-router.get("/dashboard/user/charts/:hospital_id", auth, (req, res) =>
-  AssessmentController.getUserCharts(req, res)
-);
+if (typeof AssessmentController.getUserCharts === "function") {
+  router.get("/dashboard/user/charts/:hospital_id", auth, (req, res) =>
+    AssessmentController.getUserCharts(req, res)
+  );
+}
 
 // ================= QUESTION =================
 router.get("/questions", auth, (req, res) =>
@@ -60,12 +66,16 @@ router.delete("/questions/:id", auth, authorize("admin"), (req, res) =>
 );
 
 // ================= HOSPITAL =================
-router.get("/hospitals", (req, res) =>
+router.get("/hospitals", auth, (req, res) =>
   HospitalController.index(req, res)
 );
 
 router.get("/hospitals/stats", auth, authorize("admin"), (req, res) =>
   HospitalController.getStats(req, res)
+);
+
+router.get("/hospitals/:id", auth, (req, res) =>
+  HospitalController.show(req, res)
 );
 
 router.post("/hospitals", auth, authorize("admin"), (req, res) =>
@@ -81,11 +91,11 @@ router.delete("/hospitals/:id", auth, authorize("admin"), (req, res) =>
 );
 
 // ================= INDICATOR =================
-router.get("/indicators", (req, res) =>
+router.get("/indicators", auth, (req, res) =>
   IndicatorController.index(req, res)
 );
 
-router.get("/indicators/:id", (req, res) =>
+router.get("/indicators/:id", auth, (req, res) =>
   IndicatorController.show(req, res)
 );
 
@@ -104,6 +114,18 @@ router.delete("/indicators/:id", auth, authorize("admin"), (req, res) =>
 // ================= USER =================
 router.get("/users", auth, authorize("admin"), (req, res) =>
   UserController.index(req, res)
+);
+
+router.get("/users/:id", auth, authorize("admin"), (req, res) =>
+  UserController.show(req, res)
+);
+
+router.post("/users", auth, authorize("admin"), (req, res) =>
+  UserController.store(req, res)
+);
+
+router.put("/users/:id", auth, authorize("admin"), (req, res) =>
+  UserController.update(req, res)
 );
 
 router.delete("/users/:id", auth, authorize("admin"), (req, res) =>

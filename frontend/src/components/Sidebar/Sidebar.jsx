@@ -54,7 +54,7 @@ function Sidebar({ user, onLogout }) {
               </NavLink>
               <NavLink to="/patients" className={navLinkClass}>
                 <Users size={20} />
-                Pasien / User
+                User
               </NavLink>
             </>
           ) : (

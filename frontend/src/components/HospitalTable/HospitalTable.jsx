@@ -1,51 +1,56 @@
-import { Edit, Trash2 } from "lucide-react"; 
-
-function HospitalTable({ hospitals, onEdit, onDelete }) { // 1. Terima props onEdit dan onDelete
+function HospitalTable({ hospitals = [], onEdit, onDelete }) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
-      <table className="w-full">
-        <thead className="bg-slate-100">
-          <tr>
-            <th className="p-4 text-left font-semibold text-slate-700">Nama RS</th>
-            <th className="p-4 text-left font-semibold text-slate-700">Kode</th>
-            <th className="p-4 text-left font-semibold text-slate-700">Kelas</th>
-            {/* 2. Tambahkan Header untuk Aksi */}
-            <th className="p-4 text-center font-semibold text-slate-700">Aksi</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {hospitals.map((rs) => (
-            <tr key={rs.id} className="border-t hover:bg-slate-50 transition-colors">
-              <td className="p-4 text-slate-800 font-medium">{rs.name}</td>
-              <td className="p-4 text-slate-600">{rs.code}</td>
-              <td className="p-4">
-                <span className="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-sm font-semibold">
-                  Kelas {rs.class}
-                </span>
-              </td>
-              
-              {/* 3. Tambahkan Kolom Tombol Edit dan Hapus */}
-              <td className="p-4">
-                <div className="flex items-center justify-center gap-2">
-                  <button
-                    onClick={() => onEdit(rs.id)}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg transition-colors font-medium text-sm"
-                  >
-                    <Edit size={16} /> Edit
-                  </button>
-                  <button
-                    onClick={() => onDelete(rs.id)}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors font-medium text-sm"
-                  >
-                    <Trash2 size={16} /> Hapus
-                  </button>
-                </div>
-              </td>
+    <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-slate-100 text-xs uppercase tracking-wide text-slate-500">
+            <tr>
+              <th className="px-5 py-4">No</th>
+              <th className="px-5 py-4">Nama RS</th>
+              <th className="px-5 py-4">Kode</th>
+              <th className="px-5 py-4">Kelas</th>
+              <th className="px-5 py-4">Alamat</th>
+              <th className="px-5 py-4 text-right">Aksi</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody className="divide-y divide-slate-100">
+            {hospitals.length === 0 ? (
+              <tr>
+                <td colSpan="6" className="px-5 py-8 text-center text-slate-400">
+                  Belum ada data rumah sakit.
+                </td>
+              </tr>
+            ) : (
+              hospitals.map((rs, index) => (
+                <tr key={rs.id} className="hover:bg-slate-50">
+                  <td className="px-5 py-4 font-semibold text-slate-500">{index + 1}</td>
+                  <td className="px-5 py-4 font-semibold text-slate-800">{rs.name}</td>
+                  <td className="px-5 py-4 text-slate-600">{rs.code}</td>
+                  <td className="px-5 py-4 text-slate-600">{rs.class}</td>
+                  <td className="px-5 py-4 text-slate-600">{rs.address || "-"}</td>
+                  <td className="px-5 py-4">
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => onEdit(rs)}
+                        className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700 hover:bg-amber-100"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => onDelete(rs.id, rs.name)}
+                        className="rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-100"
+                      >
+                        Hapus
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
