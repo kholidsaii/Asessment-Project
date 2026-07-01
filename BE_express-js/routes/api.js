@@ -53,9 +53,9 @@ router.get("/hospitals", (req,res)=>HospitalController.index(req,res));
 // router.get("/hospitals/:id", auth, (req,res)=>HospitalController.show(req,res));
 router.get("/hospitals/:id", (req,res)=>HospitalController.show(req,res));
 
-// router.post("/hospitals", auth, authorize("admin"), (req,res)=>HospitalController.store(req,res));
-// router.put("/hospitals/:id", auth, authorize("admin"), (req,res)=>HospitalController.update(req,res));
-// router.delete("/hospitals/:id", auth, authorize("admin"), (req,res)=>HospitalController.destroy(req,res));
+router.post("/hospitals", auth, authorize("admin"), (req,res)=>HospitalController.store(req,res));
+router.put("/hospitals/:id", auth, authorize("admin"), (req,res)=>HospitalController.update(req,res));
+router.delete("/hospitals/:id", auth, authorize("admin"), (req,res)=>HospitalController.destroy(req,res));
 
 // ================= INDICATOR =================
 // router.get("/indicators", auth, (req,res)=>IndicatorController.index(req,res));
@@ -64,19 +64,37 @@ router.get("/indicators", (req,res)=>IndicatorController.index(req,res));
 router.get("/indicators/:id", (req,res)=>IndicatorController.show(req,res));
 
 
-// router.post("/indicators", auth, authorize("admin"), (req,res)=>IndicatorController.store(req,res));
-// router.put("/indicators/:id", auth, authorize("admin"), (req,res)=>IndicatorController.update(req,res));
-// router.delete("/indicators/:id", auth, authorize("admin"), (req,res)=>IndicatorController.destroy(req,res));
+router.post("/indicators", auth, authorize("admin"), (req,res)=>IndicatorController.store(req,res));
+router.put("/indicators/:id", auth, authorize("admin"), (req,res)=>IndicatorController.update(req,res));
+router.delete("/indicators/:id", auth, authorize("admin"), (req,res)=>IndicatorController.destroy(req,res));
 
 // ================= USER (ADMIN ONLY) =================
 // router.get("/users", auth, authorize("admin"), (req,res)=>UserController.index(req,res));
 router.get("/users", (req,res)=>UserController.index(req,res));
-router.delete("/users/:id", auth, authorize("admin"), (req,res)=>UserController.destroy(req,res));
+
+// 1. GET by ID (Untuk menampilkan data lama di form Edit)
+router.get("/users/:id", (req,res)=>UserController.show(req,res));
+
+// 2. POST (Untuk menambah pengguna/pasien baru)
+router.post("/users", (req,res)=>UserController.store(req,res));
+
+// 3. PUT (Untuk menyimpan perubahan saat Edit)
+router.put("/users/:id", (req,res)=>UserController.update(req,res));
+
+// 4. DELETE (Untuk menghapus data)
+// Rute asli: router.delete("/users/:id", auth, authorize("admin"), (req,res)=>UserController.destroy(req,res));
+router.delete("/users/:id", (req,res)=>UserController.destroy(req,res));
 
 // ================= Category =================
 //Tambahkan Route Kategori di bagian bawah
 // router.get("/categories", auth, (req, res) => CategoryController.index(req, res));
 router.get("/categories", (req, res) => CategoryController.index(req, res));
+
+// 1. Tambahkan baris ini untuk mengambil detail data saat masuk ke form Edit
+router.get("/categories/:id", (req, res) => CategoryController.show(req, res));
+
 router.post("/categories", auth, authorize("admin"), (req, res) => CategoryController.store(req, res));
+router.put("/categories/:id", auth, authorize("admin"), (req, res) => CategoryController.update(req, res));
+router.delete("/categories/:id", auth, authorize("admin"), (req, res) => CategoryController.destroy(req, res));
 
 module.exports = router;

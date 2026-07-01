@@ -26,6 +26,14 @@ const User = {
     ], callback);
   },
 
+  // TAMBAHKAN INI: Fungsi untuk mengupdate data user
+  update: (id, data, callback) => {
+    // Menggunakan query "SET ?" agar bisa update secara dinamis
+    // (misalnya jika password kosong, password tidak akan ikut terupdate)
+    const sql = "UPDATE users SET ? WHERE id = ?";
+    db.query(sql, [data, id], callback);
+  },
+
   delete: (id, callback) => {
     const sql = "DELETE FROM users WHERE id = ?";
     db.query(sql, [id], callback);

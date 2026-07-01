@@ -104,5 +104,5 @@ module.exports = {
     validateHospital, 
     validateIndicator, 
     validateUser, 
-    validateFile // Pastikan ini diekspor 
+    validateFile 
 };

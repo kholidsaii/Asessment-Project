@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import api from "../utils/constant/http";
-import { Upload, CheckCircle2, Loader2, Info } from "lucide-react";
+import { Upload, CheckCircle2, Loader2, Info, Hospital, AlertCircle, FileText } from "lucide-react"; 
 
 function AssessmentPage({ user }) {
+  const [hospitals, setHospitals] = useState([]);
+  const [selectedHospital, setSelectedHospital] = useState("");
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [questions, setQuestions] = useState([]);
@@ -10,19 +12,21 @@ function AssessmentPage({ user }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // State Management untuk form per-pertanyaan
   const [scores, setScores] = useState({});
   const [files, setFiles] = useState({});
   
-  // UX State: Melacak status pengiriman tiap pertanyaan
   const [submittingId, setSubmittingId] = useState(null);
-  const [submittedStatus, setSubmittedStatus] = useState({}); // Contoh: { 1: true, 2: true }
+  const [submittedStatus, setSubmittedStatus] = useState({});
 
-  // 1. Fetch Master Kategori saat halaman dimuat
+  // 1. Fetch Master Kategori & Data Rumah Sakit
   useEffect(() => {
     api.get("/categories")
       .then((res) => setCategories(res.data.data || []))
       .catch((err) => console.error("Gagal memuat kategori", err));
+
+    api.get("/hospitals")
+      .then((res) => setHospitals(res.data.data || []))
+      .catch((err) => console.error("Gagal memuat RS", err));
   }, []);
 
   // 2. Fetch Pertanyaan saat Kategori dipilih
@@ -34,8 +38,6 @@ function AssessmentPage({ user }) {
 
     setLoading(true);
     setError(null);
-    
-    // Reset form setiap ganti kategori agar bersih
     setScores({});
     setFiles({});
     setSubmittedStatus({});
@@ -46,217 +48,189 @@ function AssessmentPage({ user }) {
       })
       .catch((err) => {
         setQuestions([]);
-        if (err.response?.status === 404) {
-          setError("Belum ada daftar pertanyaan untuk kategori ini.");
-        } else {
-          setError("Gagal mengambil data instrumen dari server.");
-        }
+        setError(err.response?.status === 404 ? "Belum ada pertanyaan pada kategori ini." : "Gagal mengambil instrumen.");
       })
       .finally(() => setLoading(false));
   }, [selectedCategory]);
 
-  const handleScoreChange = (qId, val) => {
-    setScores((prev) => ({ ...prev, [qId]: val }));
-  };
+  const handleScoreChange = (qId, val) => setScores((prev) => ({ ...prev, [qId]: val }));
+  const handleFileChange = (qId, e) => setFiles((prev) => ({ ...prev, [qId]: e.target.files[0] }));
 
-  const handleFileChange = (qId, e) => {
-    setFiles((prev) => ({ ...prev, [qId]: e.target.files[0] }));
-  };
-
-  // 3. Eksekusi Pengiriman per Indikator
+  // 3. Eksekusi Pengiriman
   const handleSubmitAssessment = async (questionId) => {
-    const score = scores[questionId];
-    const file = files[questionId];
-
-    if (score === undefined || score === null) {
-      alert("Harap pilih nilai skor terlebih dahulu!");
+    if (!selectedHospital) {
+      alert("Harap pilih Rumah Sakit terlebih dahulu!");
       return;
     }
 
-    // Menggunakan FormData karena kita mengirim file gambar (photo)
+    const score = scores[questionId];
+    const file = files[questionId];
+
+    if (score === undefined || score === "") {
+      alert("Harap pilih status kepatuhan (Patuh/Tidak Patuh) terlebih dahulu!");
+      return;
+    }
+
     const formData = new FormData();
-    // Catatan: Jika DB user belum ada hospital_id, kita pakai fallback ID 1 untuk testing
-    formData.append("hospital_id", user?.hospital_id || 1); 
+    formData.append("hospital_id", selectedHospital);
     formData.append("question_id", questionId);
     formData.append("score", score);
     
+    // Hanya tambahkan foto jika user mengunggahnya
     if (file) {
-      formData.append("photo", file);
+        formData.append("photo", file);
     }
 
     try {
       setSubmittingId(questionId);
-      
       const res = await api.post("/assessments", formData, {
         headers: { "Content-Type": "multipart/form-data" }
       });
-
-      if (res.data.success) {
-        // Tandai pertanyaan ini sudah sukses diisi
+      if (res.data.success || res.status === 201 || res.status === 200) {
         setSubmittedStatus((prev) => ({ ...prev, [questionId]: true }));
       }
     } catch (err) {
-      console.error(err);
-      alert(err.response?.data?.message || "Gagal menyimpan jawaban. Coba lagi.");
+      alert(err.response?.data?.message || "Gagal menyimpan jawaban.");
     } finally {
       setSubmittingId(null);
     }
   };
 
   return (
-    <div className="max-w-4xl pb-10">
+    <div className="max-w-4xl pb-20 mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-800">Form Input Assessment</h1>
-        <p className="text-slate-500 mt-1">
-          Pilih kategori dan lengkapi instrumen penilaian mutu layanan rumah sakit.
-        </p>
+        <h1 className="text-3xl font-bold text-slate-800 flex items-center gap-3">
+            <FileText className="text-blue-600" size={32} />
+            Form Input Assessment
+        </h1>
+        <p className="text-slate-500 mt-2">Pilih Rumah Sakit dan Kategori untuk memulai evaluasi kepatuhan.</p>
       </div>
 
-      {/* Bagian Pilihan Kategori */}
-      <div className="bg-white p-6 rounded-2xl border shadow-sm mb-6">
-        <label className="block text-sm font-bold text-slate-700 mb-3">
-          Pilih Kategori Instrumen:
-        </label>
-        <select
-          className="w-full p-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition text-slate-700 font-medium"
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-        >
-          <option value="">-- Silakan Pilih Kategori --</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.name} {cat.group ? `(${cat.group})` : ""}
-            </option>
-          ))}
-        </select>
+      {/* Grid Pemilihan: RS dan Kategori */}
+      <div className="grid md:grid-cols-2 gap-6 mb-8">
+        {/* Pilih RS */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <label className="block text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+                <Hospital size={18} className="text-blue-600" /> Pilih Rumah Sakit:
+            </label>
+            <select
+                className="w-full p-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition text-slate-700 font-medium cursor-pointer"
+                value={selectedHospital}
+                onChange={(e) => setSelectedHospital(e.target.value)}
+            >
+                <option value="">-- Silakan Pilih RS --</option>
+                {hospitals.map((h) => (
+                <option key={h.id} value={h.id}>{h.name}</option>
+                ))}
+            </select>
+        </div>
+
+        {/* Pilih Kategori */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <label className="block text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+                <Info size={18} className="text-blue-600" /> Pilih Kategori Instrumen:
+            </label>
+            <select
+                className="w-full p-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition text-slate-700 font-medium cursor-pointer"
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+            >
+                <option value="">-- Silakan Pilih Kategori --</option>
+                {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+            </select>
+        </div>
       </div>
 
-      {/* Menampilkan Status Loading / Error Murni untuk Pertanyaan */}
+      {/* TAMPILAN LOADING */}
       {loading && (
-        <div className="flex flex-col items-center justify-center p-12 text-slate-400">
-          <Loader2 className="w-8 h-8 animate-spin mb-3 text-blue-500" />
-          <p className="animate-pulse">Menyiapkan lembar kuesioner...</p>
+        <div className="flex items-center justify-center p-16 text-slate-500">
+          <Loader2 className="animate-spin text-blue-600 mr-3" size={24} />
+          <p className="font-medium">Memuat instrumen penilaian...</p>
         </div>
       )}
 
-      {error && !loading && selectedCategory && (
-        <div className="bg-orange-50 border border-orange-200 text-orange-700 p-6 rounded-2xl flex items-center justify-center gap-3">
-          <Info size={20} />
-          <p className="font-medium">{error}</p>
+      {/* TAMPILAN ERROR */}
+      {error && !loading && (
+        <div className="bg-red-50 text-red-600 border border-red-200 rounded-xl p-5 mb-6 flex items-start gap-3">
+          <AlertCircle className="shrink-0 mt-0.5" size={20} />
+          <div>
+            <p className="font-semibold text-lg mb-1">Pemberitahuan</p>
+            <p>{error}</p>
+          </div>
         </div>
       )}
 
-      {/* Daftar Kuesioner (Dirender jika ada data) */}
+      {/* DAFTAR PERTANYAAN */}
       {!loading && questions.length > 0 && (
-        <div className="space-y-5">
-          {questions.map((q, index) => {
-            const isSubmitted = submittedStatus[q.id];
-            const isSubmitting = submittingId === q.id;
+        <div className="space-y-6">
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-2 flex items-center gap-3 text-blue-800">
+                <Info size={20} className="shrink-0" />
+                <p className="text-sm font-medium">Isi status kepatuhan dan lampirkan bukti foto jika diperlukan. Jangan lupa klik "Simpan" pada setiap nomor.</p>
+            </div>
 
-            return (
-              <div 
-                key={q.id} 
-                // Jika sudah disubmit, ubah border menjadi hijau sebagai tanda visual
-                className={`bg-white p-6 rounded-2xl shadow-sm border-2 transition-all duration-300 ${
-                  isSubmitted ? "border-emerald-400 bg-emerald-50/30" : "border-slate-100"
-                }`}
-              >
-                <div className="flex gap-4">
-                  <div className={`w-8 h-8 shrink-0 flex items-center justify-center rounded-xl font-bold text-sm ${
-                    isSubmitted ? "bg-emerald-500 text-white" : "bg-blue-100 text-blue-600"
-                  }`}>
-                    {index + 1}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-slate-800 font-semibold mb-4 text-lg leading-snug">
-                      {q.indicator}
-                    </h3>
+          {questions.map((q, index) => (
+            <div key={q.id} className={`bg-white p-6 rounded-2xl border transition-all ${submittedStatus[q.id] ? 'border-green-300 ring-4 ring-green-50' : 'border-slate-200 shadow-sm hover:border-blue-300'}`}>
+              
+              {/* Teks Pertanyaan */}
+              <h3 className="font-bold text-slate-800 mb-4 text-lg leading-snug">
+                <span className="text-blue-600 mr-1">{index + 1}.</span> 
+                {q.question || q.name || q.text || "Teks instrumen tidak tersedia"}
+              </h3>
 
-                    <div className="grid md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
-                      
-                      {/* 1. Input Nilai (0-5) */}
-                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-3">
-                          Skor Penilaian
-                        </label>
-                        <div className="flex flex-wrap gap-2">
-                          {[0, 1, 2, 3, 4, 5].map((num) => (
-                            <button
-                              key={num}
-                              type="button"
-                              disabled={isSubmitted || isSubmitting}
-                              onClick={() => handleScoreChange(q.id, num)}
-                              className={`w-11 h-11 rounded-xl font-bold border-2 transition ${
-                                scores[q.id] === num
-                                  ? "bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-200"
-                                  : "bg-white border-slate-200 text-slate-600 hover:border-blue-300"
-                              } disabled:opacity-50 disabled:cursor-not-allowed`}
-                            >
-                              {num}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
+              <div className="flex flex-col md:flex-row gap-5 mt-4">
+                
+                {/* 1. Input Skor (Patuh / Tidak Patuh) */}
+                <div className="flex-1">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Status Kepatuhan:</label>
+                  <select
+                    className="w-full p-3 border border-slate-300 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition disabled:bg-slate-100 disabled:cursor-not-allowed cursor-pointer"
+                    value={scores[q.id] !== undefined ? scores[q.id] : ""}
+                    onChange={(e) => handleScoreChange(q.id, e.target.value)}
+                    disabled={submittedStatus[q.id]}
+                  >
+                    <option value="">-- Pilih Status --</option>
+                    <option value="1">✅ Sudah Dipatuhi</option>
+                    <option value="0">❌ Belum Dipatuhi</option>
+                  </select>
+                </div>
 
-                      {/* 2. Upload Bukti Foto */}
-                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-3">
-                          Dokumen / Foto Bukti (Opsional)
-                        </label>
-                        <div className="flex items-center gap-3">
-                          <label className={`flex items-center gap-2 px-4 py-2.5 border-2 rounded-xl text-sm font-medium transition cursor-pointer ${
-                            isSubmitted || isSubmitting
-                              ? "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed"
-                              : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
-                          }`}>
-                            <Upload size={16} />
-                            <span>Pilih File</span>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              disabled={isSubmitted || isSubmitting}
-                              onChange={(e) => handleFileChange(q.id, e)}
-                            />
-                          </label>
-                          <span className="text-sm text-slate-500 truncate max-w-[150px]">
-                            {files[q.id] ? files[q.id].name : "Tidak ada file"}
-                          </span>
-                        </div>
-                      </div>
-
-                    </div>
-
-                    {/* 3. Tombol Eksekusi Submit per Soal */}
-                    <div className="flex justify-end pt-5 mt-2">
-                      {isSubmitted ? (
-                        <div className="flex items-center gap-2 text-emerald-600 font-bold px-4 py-2 bg-emerald-100 rounded-xl">
-                          <CheckCircle2 size={20} />
-                          <span>Tersimpan</span>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => handleSubmitAssessment(q.id)}
-                          disabled={isSubmitting || scores[q.id] === undefined}
-                          className="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white px-6 py-2.5 rounded-xl font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {isSubmitting ? (
-                            <>
-                              <Loader2 size={18} className="animate-spin" />
-                              <span>Menyimpan...</span>
-                            </>
-                          ) : (
-                            <span>Simpan Jawaban</span>
-                          )}
-                        </button>
-                      )}
-                    </div>
-
-                  </div>
+                {/* 2. Input Upload Foto */}
+                <div className="flex-1">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Bukti Lampiran Foto:</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(q.id, e)}
+                    disabled={submittedStatus[q.id]}
+                    className="w-full p-2 border border-slate-300 rounded-xl text-sm text-slate-600 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                  />
                 </div>
               </div>
-            );
-          })}
+
+              {/* 3. Tombol Simpan Aksi */}
+              <div className="mt-6 flex justify-end pt-4 border-t border-slate-100">
+                {submittedStatus[q.id] ? (
+                  <div className="flex items-center gap-2 text-green-700 font-semibold bg-green-100 px-5 py-2.5 rounded-xl border border-green-200">
+                    <CheckCircle2 size={20} /> Data Tersimpan
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => handleSubmitAssessment(q.id)}
+                    disabled={submittingId === q.id || !selectedHospital}
+                    className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-blue-700 transition active:scale-95 disabled:bg-slate-300 disabled:text-slate-500 disabled:active:scale-100 disabled:cursor-not-allowed shadow-md shadow-blue-500/20"
+                  >
+                    {submittingId === q.id ? (
+                      <><Loader2 size={18} className="animate-spin" /> Memproses...</>
+                    ) : (
+                      <><Upload size={18} /> Simpan Jawaban</>
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
