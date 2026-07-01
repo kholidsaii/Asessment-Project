@@ -2,88 +2,124 @@ const Question = require("../models/Question");
 const errorHandler = require("../utils/errorHandler");
 
 class QuestionController {
-
-  // Ambil semua question (Bisa di-filter berdasarkan category jika ada query URL)
   index(req, res) {
-    const { category_id } = req.query;
+    const { indicator_id } = req.query;
 
-    if (category_id) {
-      // Skenario 1: Dipanggil dari halaman Assessment (/questions?category_id=1)
-      Question.getByCategory(category_id, (err, results) => {
-        if (err) return errorHandler(res, err, 500);
+    const query = indicator_id
+      ? (callback) => Question.getByIndicator(indicator_id, callback)
+      : (callback) => Question.getAll(callback);
 
-        if (results.length === 0) {
-          return res.status(404).json({ success: false, message: "Data question kosong" });
-        }
+    query((err, results) => {
+      if (err) return errorHandler(res, err, 500, "Gagal mengambil data pertanyaan");
 
-        res.json({ success: true, message: "Berhasil ambil question by kategori", data: results });
+      res.json({
+        success: true,
+        message: "Data pertanyaan berhasil diambil",
+        data: results || [],
       });
-    } else {
-      // Skenario 2: Dipanggil dari halaman Master Data (/questions)
-      Question.getAll((err, results) => {
-        if (err) return errorHandler(res, err, 500);
-
-        res.json({ success: true, message: "Berhasil ambil semua question", data: results });
-      });
-    }
-  }
-
-  // Menampilkan 1 data untuk form Edit
-  show(req, res) {
-    const { id } = req.params;
-    
-    Question.getById(id, (err, results) => {
-      if (err) return errorHandler(res, err, 500);
-      
-      if (results.length === 0) {
-        return res.status(404).json({ success: false, message: "Question tidak ditemukan" });
-      }
-
-      res.json({ success: true, message: "Detail question", data: results[0] });
     });
   }
 
-  // Tambah question
+  show(req, res) {
+    const { id } = req.params;
+
+    Question.getById(id, (err, results) => {
+      if (err) return errorHandler(res, err, 500, "Gagal mengambil detail pertanyaan");
+
+      if (!results || results.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "Pertanyaan tidak ditemukan",
+        });
+      }
+
+      res.json({
+        success: true,
+        message: "Detail pertanyaan berhasil diambil",
+        data: results[0],
+      });
+    });
+  }
+
   store(req, res) {
     const data = req.body;
 
-    if (!data.category_id || (!data.indicator && !data.question)) {
-      return errorHandler(res, "Data tidak lengkap", 400);
+    if (!data.indicator_id || !data.question_text?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Indikator dan teks pertanyaan wajib diisi",
+      });
     }
 
-    Question.create(data, (err, result) => {
-      if (err) return errorHandler(res, err, 500);
+    Question.create(
+      {
+        indicator_id: Number(data.indicator_id),
+        question_text: data.question_text.trim(),
+      },
+      (err, result) => {
+        if (err) return errorHandler(res, err, 500, "Gagal menambahkan pertanyaan");
 
-      res.status(201).json({
-        success: true,
-        message: "Question berhasil ditambahkan",
-        data: { id: result.insertId, ...data }
-      });
-    });
+        res.status(201).json({
+          success: true,
+          message: "Pertanyaan berhasil ditambahkan",
+          data: { id: result.insertId, ...data },
+        });
+      }
+    );
   }
 
-  // Edit question
   update(req, res) {
     const { id } = req.params;
     const data = req.body;
 
-    if (!data.category_id || (!data.indicator && !data.question)) {
-      return errorHandler(res, "Data tidak lengkap", 400);
+    if (!data.indicator_id || !data.question_text?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Indikator dan teks pertanyaan wajib diisi",
+      });
     }
 
-    Question.update(id, data, (err) => {
-      if (err) return errorHandler(res, err, 500);
-      res.json({ success: true, message: "Question berhasil diupdate" });
-    });
+    Question.update(
+      id,
+      {
+        indicator_id: Number(data.indicator_id),
+        question_text: data.question_text.trim(),
+      },
+      (err, result) => {
+        if (err) return errorHandler(res, err, 500, "Gagal mengupdate pertanyaan");
+
+        if (result.affectedRows === 0) {
+          return res.status(404).json({
+            success: false,
+            message: "Pertanyaan tidak ditemukan",
+          });
+        }
+
+        res.json({
+          success: true,
+          message: "Pertanyaan berhasil diupdate",
+        });
+      }
+    );
   }
 
-  // Hapus question
   destroy(req, res) {
     const { id } = req.params;
 
-    Question.delete(id, (err) => {
-      if (err) return errorHandler(res, err, 500);
-      res.json({ success: true, message: "Question berhasil dihapus" });
+    Question.delete(id, (err, result) => {
+      if (err) return errorHandler(res, err, 500, "Gagal menghapus pertanyaan");
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "Pertanyaan tidak ditemukan",
+        });
+      }
+
+      res.json({
+        success: true,
+        message: "Pertanyaan berhasil dihapus",
+      });
     });
   }
 }

@@ -10,11 +10,11 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-/**
- * [2] Static File Handling (Materi Pertemuan 7)
- * Membuat folder 'uploads' dapat diakses secara publik lewat URL.
- * Contoh: http://localhost:3000/uploads/nama-file.jpg
- */
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.originalUrl}`);
+  next();
+});
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // 
 
 // Routing

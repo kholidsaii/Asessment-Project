@@ -2,12 +2,12 @@ const db = require("../config/database");
 
 const User = {
   getAll: (callback) => {
-    const sql = "SELECT id, name, email, role FROM users";
+    const sql = "SELECT id, name, email, role, hospital_id FROM users";
     db.query(sql, callback);
   },
 
   getById: (id, callback) => {
-    const sql = "SELECT id, name, email, role FROM users WHERE id = ?";
+    const sql = "SELECT id, name, email, role, hospital_id FROM users WHERE id = ?";
     db.query(sql, [id], callback);
   },
 
@@ -17,12 +17,17 @@ const User = {
   },
 
   create: (data, callback) => {
-    const sql = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
+    const sql = `
+      INSERT INTO users (name, email, password, role, hospital_id)
+      VALUES (?, ?, ?, ?, ?)
+    `;
+
     db.query(sql, [
       data.name,
       data.email,
       data.password,
-      data.role || "user"
+      data.role || "user",
+      data.hospital_id || null
     ], callback);
   },
 
