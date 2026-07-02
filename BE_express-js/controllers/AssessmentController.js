@@ -64,7 +64,26 @@ class AssessmentController {
       res.json({
         success: true,
         message: "Berhasil mengambil rekap laporan",
-        data: results[0]
+        // PERBAIKAN: Hapus [0] agar mengembalikan array seluruh jawaban
+        data: results 
+      });
+    });
+  }
+  getAnswers(req, res) {
+    const { hospital_id } = req.params;
+
+    // Pastikan model Assessment kamu sudah di-require di bagian atas file ini
+    const Assessment = require("../models/Assessment"); 
+
+    Assessment.getAnswersByHospital(hospital_id, (err, results) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: "Gagal mengambil riwayat jawaban" });
+      }
+
+      res.json({
+        success: true,
+        message: "Berhasil mengambil riwayat jawaban",
+        data: results // Mengembalikan array [{question_id: 1, score: 1}, ...]
       });
     });
   }

@@ -11,44 +11,65 @@ function Home({ user }) {
     users: 0,
     indicators: 0,
   });
+  
+  // Tambah state loading agar UI nampak lebih lancar
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Memanggil mock API statistik yang ada di file backend (api.js) Anda
-    api.get("/hospitals/stats")
-      .then((res) => {
-        if (res.data.success) {
-          // Menyesuaikan struktur response dari mock backend Anda
-          setStats({
-            hospitals: res.data.data.totalHospitals,
-            users: res.data.data.totalUsers,
-            indicators: res.data.data.totalIndicators,
-          });
-        }
-      })
-      .catch((err) => {
-        console.error("Gagal mengambil data statistik:", err);
-        // Fallback dummy data jika API gagal ditarik
+    // Fungsi untuk mengambil semua data serentak
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        
+        // Memanggil ketiga-tiga endpoint sebenar secara serentak (parallel)
+        const [hospitalsRes, usersRes, questionsRes] = await Promise.all([
+          api.get("/hospitals"),
+          api.get("/users"),
+          api.get("/questions")
+        ]);
+
+        // Mengira jumlah (length) data sebenar dari pangkalan data
         setStats({
-          hospitals: 12,
-          users: 45,
-          indicators: 8,
+          hospitals: hospitalsRes.data.data?.length || 0,
+          users: usersRes.data.data?.length || 0,
+          indicators: questionsRes.data.data?.length || 0,
         });
-      });
+      } catch (err) {
+        console.error("Gagal mengambil data statistik:", err);
+        // Tetapkan ke 0 jika berlaku ralat, bukannya data palsu
+        setStats({
+          hospitals: 0,
+          users: 0,
+          indicators: 0,
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
   }, []);
 
   return (
     <div>
       <DashboardHeader />
       
-      {/* Jika user memiliki informasi role, kita bisa tampilkan pesan selamat datang kecil */}
+      {/* Mesej selamat datang untuk pengguna yang log masuk */}
       {user && (
         <div className="mb-6 text-slate-500">
           Selamat datang kembali, <span className="font-semibold text-slate-700">{user.name}</span>!
         </div>
       )}
 
-      {/* Sekarang stats tidak lagi undefined */}
-      <StatsSection stats={stats} />
+      {/* Paparkan efek loading semasa data sedang diambil */}
+      {loading ? (
+        <div className="p-10 mb-8 bg-white rounded-2xl border border-slate-200 text-center text-slate-500 animate-pulse">
+          Memuatkan data statistik semasa...
+        </div>
+      ) : (
+        <StatsSection stats={stats} />
+      )}
+      
       <ActivitySection />
     </div>
   );

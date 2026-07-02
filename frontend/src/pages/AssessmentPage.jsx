@@ -30,28 +30,58 @@ function AssessmentPage({ user }) {
   }, []);
 
   // 2. Fetch Pertanyaan saat Kategori dipilih
+// 2. Fetch Pertanyaan DAN Riwayat Jawaban
   useEffect(() => {
-    if (!selectedCategory) {
+    if (!selectedCategory || !selectedHospital) {
       setQuestions([]);
       return;
     }
 
-    setLoading(true);
-    setError(null);
-    setScores({});
-    setFiles({});
-    setSubmittedStatus({});
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      setScores({});
+      setFiles({});
+      setSubmittedStatus({});
 
-    api.get(`/questions?category_id=${selectedCategory}`)
-      .then((res) => {
-        setQuestions(res.data.data || []);
-      })
-      .catch((err) => {
+      try {
+        // A. Ambil list instrumen pertanyaan (Wajib Berhasil)
+        const qRes = await api.get(`/questions?category_id=${selectedCategory}`);
+        setQuestions(qRes.data.data || []);
+
+        // B. Ambil riwayat penilaian (Diletakkan di try-catch terpisah)
+       try {
+          // UBAH BARIS INI: Ganti kata 'report' menjadi 'answers'
+          const rRes = await api.get(`/assessments/answers/${selectedHospital}`);
+          const historyData = rRes.data.data;
+
+          if (Array.isArray(historyData)) {
+            const existingScores = {};
+            const existingStatus = {};
+
+            historyData.forEach((item) => {
+              existingScores[item.question_id] = item.score; 
+              existingStatus[item.question_id] = true; 
+            });
+
+            setScores(existingScores);
+            setSubmittedStatus(existingStatus);
+          }
+        } catch (historyErr) {
+          console.log("Riwayat jawaban kosong untuk RS ini.");
+        }
+
+      } catch (err) {
+        console.error("Gagal memuat instrumen:", err);
         setQuestions([]);
-        setError(err.response?.status === 404 ? "Belum ada pertanyaan pada kategori ini." : "Gagal mengambil instrumen.");
-      })
-      .finally(() => setLoading(false));
-  }, [selectedCategory]);
+        setError("Gagal memuat daftar instrumen pertanyaan.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [selectedCategory, selectedHospital]);
 
   const handleScoreChange = (qId, val) => setScores((prev) => ({ ...prev, [qId]: val }));
   const handleFileChange = (qId, e) => setFiles((prev) => ({ ...prev, [qId]: e.target.files[0] }));
@@ -174,9 +204,10 @@ function AssessmentPage({ user }) {
             <div key={q.id} className={`bg-white p-6 rounded-2xl border transition-all ${submittedStatus[q.id] ? 'border-green-300 ring-4 ring-green-50' : 'border-slate-200 shadow-sm hover:border-blue-300'}`}>
               
               {/* Teks Pertanyaan */}
-              <h3 className="font-bold text-slate-800 mb-4 text-lg leading-snug">
+             <h3 className="font-bold text-slate-800 mb-4 text-lg leading-snug">
                 <span className="text-blue-600 mr-1">{index + 1}.</span> 
-                {q.question || q.name || q.text || "Teks instrumen tidak tersedia"}
+                {/* Tambahkan q.indicator di urutan paling depan */}
+                {q.indicator || q.question || q.name || "Teks instrumen tidak tersedia"}
               </h3>
 
               <div className="flex flex-col md:flex-row gap-5 mt-4">

@@ -32,7 +32,11 @@ const Assessment = {
     `;
 
     db.query(sql, [hospitalId], callback);
-  }
+  },
+  getAnswersByHospital: (hospitalId, callback) => {
+    const sql = "SELECT question_id, score FROM assessments WHERE hospital_id = ?";
+    db.query(sql, [hospitalId], callback);
+  },
 };
 
 module.exports = Assessment;

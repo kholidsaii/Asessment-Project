@@ -20,6 +20,9 @@ router.post("/assessments", auth, upload.single("photo"), (req,res)=>
 router.get("/assessments/report/:hospital_id", auth, (req,res)=>
   AssessmentController.getHospitalReport(req,res)
 );
+router.get("/assessments/answers/:hospital_id", (req,res)=>
+  AssessmentController.getAnswers(req,res)
+);
 
 // ================= QUESTION =================
 router.get("/questions", auth, (req,res)=>
