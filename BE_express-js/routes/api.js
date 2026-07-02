@@ -12,46 +12,11 @@ const auth = require("../middleware/auth");
 const authorize = require("../middleware/authorize");
 const upload = require("../middleware/upload");
 
-// ================= Assesment =================
-router.post("/assessments", auth, upload.single("photo"), (req,res)=>
-  AssessmentController.submitScore(req,res)
-);
-router.get("/assessments/report/:hospital_id", auth, (req,res)=>
-  AssessmentController.getHospitalReport(req,res)
-);
-router.get("/assessments/answers/:hospital_id", (req,res)=>
-  AssessmentController.getAnswers(req,res)
-);
-
-// ================= QUESTION =================
-router.get("/questions", auth, (req,res)=>
-  QuestionController.index(req,res)
-);
-
-router.post("/questions", auth, authorize("admin"), (req,res)=>
-  QuestionController.store(req,res)
-);
-
 // ================= AUTH =================
 router.post("/register", (req, res) => AuthController.register(req, res));
 router.post("/login", (req, res) => AuthController.login(req, res));
 
-// ================= ASSESSMENT =================
-router.post("/assessments", auth, upload.single("photo"), (req, res) =>
-  AssessmentController.submitScore(req, res)
-);
-
-router.get("/assessments/recent", auth, (req, res) =>
-  AssessmentController.getLatestActivities(req, res)
-);
-
-router.get("/assessments/report/:hospital_id", auth, (req, res) =>
-  AssessmentController.getHospitalReport(req, res)
-);
-
 // ================= DASHBOARD CHARTS =================
-// Route ini aman jika kamu sudah memakai patch grafik. Kalau controller belum punya method ini,
-// jangan panggil URL ini dari frontend atau gunakan patch grafik dashboard sebelumnya.
 if (typeof AssessmentController.getAdminCharts === "function") {
   router.get("/dashboard/admin/charts", auth, authorize("admin"), (req, res) =>
     AssessmentController.getAdminCharts(req, res)
@@ -64,34 +29,32 @@ if (typeof AssessmentController.getUserCharts === "function") {
   );
 }
 
-// ================= QUESTION =================
-router.get("/questions", auth, (req, res) =>
-  QuestionController.index(req, res)
+// ================= ASSESSMENT =================
+// Route static (seperti /recent) wajib diletakkan di atas route berparameter (:id)
+router.get("/assessments/recent", auth, (req, res) =>
+  AssessmentController.getLatestActivities(req, res)
 );
 
-router.get("/questions/:id", auth, authorize("admin"), (req, res) =>
-  QuestionController.show(req, res)
+router.post("/assessments", auth, upload.single("photo"), (req, res) =>
+  AssessmentController.submitScore(req, res)
 );
 
-router.post("/questions", auth, authorize("admin"), (req, res) =>
-  QuestionController.store(req, res)
+router.get("/assessments/report/:hospital_id", auth, (req, res) =>
+  AssessmentController.getHospitalReport(req, res)
 );
 
-router.put("/questions/:id", auth, authorize("admin"), (req, res) =>
-  QuestionController.update(req, res)
-);
-
-router.delete("/questions/:id", auth, authorize("admin"), (req, res) =>
-  QuestionController.destroy(req, res)
+router.get("/assessments/answers/:hospital_id", auth, (req, res) =>
+  AssessmentController.getAnswers(req, res)
 );
 
 // ================= HOSPITAL =================
-router.get("/hospitals", auth, (req, res) =>
-  HospitalController.index(req, res)
+// Hapus authorize("admin") agar user biasa bisa melihat summary stats di dashboard
+router.get("/hospitals/stats", auth, (req, res) =>
+  HospitalController.getStats(req, res)
 );
 
-router.get("/hospitals/stats", auth, authorize("admin"), (req, res) =>
-  HospitalController.getStats(req, res)
+router.get("/hospitals", auth, (req, res) =>
+  HospitalController.index(req, res)
 );
 
 router.get("/hospitals/:id", auth, (req, res) =>
@@ -129,6 +92,27 @@ router.put("/indicators/:id", auth, authorize("admin"), (req, res) =>
 
 router.delete("/indicators/:id", auth, authorize("admin"), (req, res) =>
   IndicatorController.destroy(req, res)
+);
+
+// ================= QUESTION =================
+router.get("/questions", auth, (req, res) =>
+  QuestionController.index(req, res)
+);
+
+router.get("/questions/:id", auth, authorize("admin"), (req, res) =>
+  QuestionController.show(req, res)
+);
+
+router.post("/questions", auth, authorize("admin"), (req, res) =>
+  QuestionController.store(req, res)
+);
+
+router.put("/questions/:id", auth, authorize("admin"), (req, res) =>
+  QuestionController.update(req, res)
+);
+
+router.delete("/questions/:id", auth, authorize("admin"), (req, res) =>
+  QuestionController.destroy(req, res)
 );
 
 // ================= USER =================

@@ -6,7 +6,7 @@ const Question = {
       SELECT
         q.id,
         q.indicator_id,
-        q.question_text,
+        q.indicator AS question_text,
         i.name AS indicator_name,
         i.description AS indicator_description
       FROM questions q
@@ -22,7 +22,7 @@ const Question = {
       SELECT
         q.id,
         q.indicator_id,
-        q.question_text,
+        q.indicator AS question_text,
         i.name AS indicator_name,
         i.description AS indicator_description
       FROM questions q
@@ -39,7 +39,7 @@ const Question = {
       SELECT
         q.id,
         q.indicator_id,
-        q.question_text,
+        q.indicator AS question_text,
         i.name AS indicator_name,
         i.description AS indicator_description
       FROM questions q
@@ -51,8 +51,9 @@ const Question = {
   },
 
   create: (data, callback) => {
+    // Ubah nama kolom dari question_text menjadi indicator pada INSERT
     const sql = `
-      INSERT INTO questions (indicator_id, question_text)
+      INSERT INTO questions (indicator_id, indicator)
       VALUES (?, ?)
     `;
 
@@ -60,9 +61,10 @@ const Question = {
   },
 
   update: (id, data, callback) => {
+    // Ubah nama kolom dari question_text menjadi indicator pada UPDATE
     const sql = `
       UPDATE questions
-      SET indicator_id = ?, question_text = ?
+      SET indicator_id = ?, indicator = ?
       WHERE id = ?
     `;
 

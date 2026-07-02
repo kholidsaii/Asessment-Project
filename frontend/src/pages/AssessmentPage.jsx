@@ -3,8 +3,12 @@ import api from "../utils/constant/http";
 import { Upload, CheckCircle2, Loader2, Info } from "lucide-react";
 
 function AssessmentPage({ user }) {
+  const [hospitals, setHospitals] = useState([]);
   const [indicators, setIndicators] = useState([]);
+  
+  const [selectedHospital, setSelectedHospital] = useState("");
   const [selectedIndicator, setSelectedIndicator] = useState("");
+  
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -14,28 +18,62 @@ function AssessmentPage({ user }) {
   const [submittingId, setSubmittingId] = useState(null);
   const [submittedStatus, setSubmittedStatus] = useState({});
 
+  // 1. Fetch Rumah Sakit & Indikator
   useEffect(() => {
-    api
-      .get("/indicators")
+    api.get("/indicators")
       .then((res) => setIndicators(res.data.data || []))
       .catch((err) => console.error("Gagal memuat indikator", err));
+
+    api.get("/hospitals")
+      .then((res) => setHospitals(res.data.data || []))
+      .catch((err) => console.error("Gagal memuat daftar RS", err));
   }, []);
 
-  // 2. Fetch Pertanyaan saat Kategori dipilih
   useEffect(() => {
-    if (!selectedCategory) {
+    if (user?.hospital_id) {
+      setSelectedHospital(user.hospital_id);
+    }
+  }, [user]);
+
+  // 2. Fetch Riwayat Jawaban berdasarkan Rumah Sakit yang dipilih
+  useEffect(() => {
+    if (!selectedHospital) {
+      setScores({});
+      setSubmittedStatus({});
+      return;
+    }
+
+    // Ambil data jawaban lama dari backend
+    api.get(`/assessments/answers/${selectedHospital}`)
+      .then((res) => {
+        if (res.data.success) {
+          const historyScores = {};
+          const historyStatus = {};
+          
+          res.data.data.forEach((item) => {
+            historyScores[item.question_id] = item.score;
+            historyStatus[item.question_id] = true; // Tandai bahwa ini sudah tersimpan
+          });
+          
+          setScores(historyScores);
+          setSubmittedStatus(historyStatus);
+        }
+      })
+      .catch((err) => console.error("Gagal mengambil riwayat jawaban:", err));
+  }, [selectedHospital]);
+
+  // 3. Fetch Pertanyaan saat Kategori dipilih
+  useEffect(() => {
+    if (!selectedIndicator) {
       setQuestions([]);
       return;
     }
 
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      setScores({});
-      setFiles({});
-      setSubmittedStatus({});
+    setLoading(true);
+    setError(null);
+    // CATATAN: State scores dan status TIDAK DI-RESET di sini agar riwayat tidak hilang
 
-    api.get(`/questions?category_id=${selectedCategory}`)
+    api.get(`/questions?category_id=${selectedIndicator}`)
       .then((res) => {
         setQuestions(res.data.data || []);
       })
@@ -44,14 +82,17 @@ function AssessmentPage({ user }) {
         setError(err.response?.status === 404 ? "Belum ada pertanyaan pada kategori ini." : "Gagal mengambil instrumen.");
       })
       .finally(() => setLoading(false));
-  }, [selectedCategory]); 
+  }, [selectedIndicator]); 
 
+  // Memungkinkan user meng-update jawaban yang sudah tersimpan
   const handleScoreChange = (qId, val) => {
     setScores((prev) => ({ ...prev, [qId]: val }));
+    setSubmittedStatus((prev) => ({ ...prev, [qId]: false })); // Hilangkan status 'Tersimpan' agar tombol Simpan muncul lagi
   };
 
   const handleFileChange = (qId, e) => {
     setFiles((prev) => ({ ...prev, [qId]: e.target.files[0] }));
+    setSubmittedStatus((prev) => ({ ...prev, [qId]: false }));
   };
 
   const handleSubmitAssessment = async (questionId) => {
@@ -63,13 +104,13 @@ function AssessmentPage({ user }) {
       return;
     }
 
-    if (!user?.hospital_id) {
-      alert("Akun ini belum terhubung dengan data rumah sakit. Silakan hubungi admin.");
+    if (!selectedHospital) {
+      alert("Harap pilih Rumah Sakit terlebih dahulu di bagian atas!");
       return;
     }
 
     const formData = new FormData();
-    formData.append("hospital_id", user.hospital_id);
+    formData.append("hospital_id", selectedHospital);
     formData.append("question_id", questionId);
     formData.append("score", score);
 
@@ -79,7 +120,6 @@ function AssessmentPage({ user }) {
 
     try {
       setSubmittingId(questionId);
-
       const res = await api.post("/assessments", formData);
 
       if (res.data.success) {
@@ -102,22 +142,42 @@ function AssessmentPage({ user }) {
         </p>
       </div>
 
-      <div className="bg-white p-6 rounded-2xl border shadow-sm mb-6">
-        <label className="block text-sm font-bold text-slate-700 mb-3">
-          Pilih Indikator / Layanan:
-        </label>
-        <select
-          className="w-full p-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition text-slate-700 font-medium"
-          value={selectedIndicator}
-          onChange={(e) => setSelectedIndicator(e.target.value)}
-        >
-          <option value="">-- Silakan Pilih Indikator --</option>
-          {indicators.map((indicator) => (
-            <option key={indicator.id} value={indicator.id}>
-              {indicator.name}
-            </option>
-          ))}
-        </select>
+      <div className="grid md:grid-cols-2 gap-4 mb-6">
+        <div className="bg-white p-6 rounded-2xl border shadow-sm">
+          <label className="block text-sm font-bold text-slate-700 mb-3">
+            Pilih Rumah Sakit:
+          </label>
+          <select
+            className="w-full p-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition text-slate-700 font-medium"
+            value={selectedHospital}
+            onChange={(e) => setSelectedHospital(e.target.value)}
+          >
+            <option value="">-- Silakan Pilih Rumah Sakit --</option>
+            {hospitals.map((hospital) => (
+              <option key={hospital.id} value={hospital.id}>
+                {hospital.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl border shadow-sm">
+          <label className="block text-sm font-bold text-slate-700 mb-3">
+            Pilih Indikator / Layanan:
+          </label>
+          <select
+            className="w-full p-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition text-slate-700 font-medium"
+            value={selectedIndicator}
+            onChange={(e) => setSelectedIndicator(e.target.value)}
+          >
+            <option value="">-- Silakan Pilih Indikator --</option>
+            {indicators.map((indicator) => (
+              <option key={indicator.id} value={indicator.id}>
+                {indicator.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {loading && (
@@ -184,7 +244,7 @@ function AssessmentPage({ user }) {
                             <button
                               key={num}
                               type="button"
-                              disabled={isSubmitted || isSubmitting}
+                              disabled={isSubmitting} // Kini hanya disable ketika sedang submit API, user bebas mengklik skor lagi untuk update data
                               onClick={() => handleScoreChange(q.id, num)}
                               className={`min-w-14 h-11 px-3 rounded-xl font-bold border-2 transition ${
                                 scores[q.id] === num
@@ -208,7 +268,7 @@ function AssessmentPage({ user }) {
                         <div className="flex items-center gap-3">
                           <label
                             className={`flex items-center gap-2 px-4 py-2.5 border-2 rounded-xl text-sm font-medium transition cursor-pointer ${
-                              isSubmitted || isSubmitting
+                              isSubmitting
                                 ? "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed"
                                 : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
                             }`}
@@ -219,12 +279,12 @@ function AssessmentPage({ user }) {
                               type="file"
                               accept="image/*"
                               className="hidden"
-                              disabled={isSubmitted || isSubmitting}
+                              disabled={isSubmitting}
                               onChange={(e) => handleFileChange(q.id, e)}
                             />
                           </label>
-                          <span className="text-sm text-slate-500 truncate max-w-[150px]">
-                            {files[q.id] ? files[q.id].name : "Tidak ada file"}
+                          <span className="text-sm text-slate-500 truncate max-w-37.5">
+                            {files[q.id] ? files[q.id].name : "Tidak ada file (atau tersimpan di sistem)"}
                           </span>
                         </div>
                       </div>
@@ -232,7 +292,7 @@ function AssessmentPage({ user }) {
 
                     <div className="flex justify-end pt-5 mt-2">
                       {isSubmitted ? (
-                        <div className="flex items-center gap-2 text-emerald-600 font-bold px-4 py-2 bg-emerald-100 rounded-xl">
+                        <div className="flex items-center gap-2 text-emerald-600 font-bold px-4 py-2 bg-emerald-100 rounded-xl cursor-default">
                           <CheckCircle2 size={20} />
                           <span>Tersimpan</span>
                         </div>
@@ -248,7 +308,7 @@ function AssessmentPage({ user }) {
                               <span>Menyimpan...</span>
                             </>
                           ) : (
-                            <span>Simpan Jawaban</span>
+                            <span>{scores[q.id] !== undefined ? "Simpan Jawaban" : "Pilih Skor Dulu"}</span>
                           )}
                         </button>
                       )}

@@ -2,13 +2,13 @@ const db = require("../config/database");
 
 const Assessment = {
   saveScore: (data, callback) => {
+    // Menghapus 'updated_at = CURRENT_TIMESTAMP' agar tidak error saat update skor
     const sql = `
       INSERT INTO assessments (hospital_id, question_id, score, photo)
       VALUES (?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE 
         score = VALUES(score),
-        photo = VALUES(photo),
-        updated_at = CURRENT_TIMESTAMP
+        photo = VALUES(photo)
     `;
 
     db.query(
@@ -84,6 +84,8 @@ const Assessment = {
   getLatestActivities: (limit = 5, callback) => {
     const safeLimit = Number(limit) || 5;
 
+    // KITA KEMBALIKAN a.created_at & a.updated_at
+    // DAN KITA UBAH q.question_text MENJADI q.indicator
     const sql = `
       SELECT
         a.id,
@@ -94,7 +96,7 @@ const Assessment = {
         a.created_at,
         a.updated_at,
         h.name AS hospital_name,
-        q.question_text AS question_text,
+        q.indicator AS question_text, 
         i.name AS indicator_name
       FROM assessments a
       LEFT JOIN hospitals h ON a.hospital_id = h.id
@@ -144,16 +146,26 @@ const Assessment = {
   getAdminAssessmentTrend: (callback) => {
     const sql = `
       SELECT
-        DATE(COALESCE(a.updated_at, a.created_at)) AS assessment_date,
-        COUNT(*) AS total_assessments
+        CURRENT_DATE() AS assessment_date,
+        COUNT(a.id) AS total_assessments
       FROM assessments a
-      GROUP BY DATE(COALESCE(a.updated_at, a.created_at))
-      ORDER BY assessment_date ASC
-      LIMIT 7
+      GROUP BY CURRENT_DATE()
     `;
 
     db.query(sql, callback);
   },
+
+  // ---- TAMBAHKAN KODE INI ----
+  getAnswersByHospital: (hospitalId, callback) => {
+    const sql = `
+      SELECT question_id, score, photo 
+      FROM assessments 
+      WHERE hospital_id = ?
+    `;
+    db.query(sql, [hospitalId], callback);
+  }
+  // ----------------------------
 };
+
 
 module.exports = Assessment;
