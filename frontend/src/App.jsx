@@ -5,20 +5,13 @@ import Sidebar from "./components/Sidebar/Sidebar";
 import Home from "./pages/Home";
 import HospitalPage from "./pages/HospitalPage";
 import IndicatorPage from "./pages/IndicatorPage";
-import IndicatorFormPage from "./pages/IndicatorFormPage";
+import IndicatorFormPage from "./pages/IndicatorFormPage"; // 1. IMPORT FILE FORM BARU YANG KITA BUAT
+import QuestionPage from "./pages/QuestionPage";
 import PatientPage from "./pages/PatientPage";
-import PatientFormPage from "./pages/PatientFormPage";
 import AssessmentPage from "./pages/AssessmentPage";
 import ReportPage from "./pages/ReportPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
-import QuestionPage from "./pages/QuestionPage";
-import QuestionFormPage from "./pages/QuestionFormPage";
-
-// 1. IMPORT FILE CATEGORY BARU DI SINI
-import CategoryPage from "./pages/CategoryPage";
-import CategoryFormPage from "./pages/CategoryFormPage"; 
-import HospitalFormPage from "./pages/HospitalFormPage"; // Import halaman form rumah sakit
 
 function App() {
   const [user, setUser] = useState(null);
@@ -79,23 +72,14 @@ function App() {
                     {user.role === "admin" ? (
                       <>
                         <Route path="/hospitals" element={<HospitalPage />} />
-                        <Route path="/hospitals/new" element={<HospitalFormPage />} />
-                        <Route path="/hospitals/edit/:id" element={<HospitalFormPage />} />
                         <Route path="/indicators" element={<IndicatorPage />} />
+                        
+                        {/* 2. DAFTARKAN DUA JALUR RUTE FORM CRUD DI SINI (DI BAWAH /indicators) */}
                         <Route path="/indicators/new" element={<IndicatorFormPage />} />
                         <Route path="/indicators/edit/:id" element={<IndicatorFormPage />} />
-                        
-                        {/* 2. DAFTARKAN RUTE CRUD CATEGORY KHUSUS ADMIN DI SINI */}
-                        <Route path="/categories" element={<CategoryPage />} />
-                        <Route path="/categories/new" element={<CategoryFormPage />} />
-                        <Route path="/categories/:id/edit" element={<CategoryFormPage />} />
+                        <Route path="/questions" element={<QuestionPage />} />
                         
                         <Route path="/patients" element={<PatientPage />} />
-                        <Route path="/patients/new" element={<PatientFormPage />} />
-                        <Route path="/patients/:id/edit" element={<PatientFormPage />} />
-                        <Route path="/questions" element={<QuestionPage />} />
-                        <Route path="/questions/new" element={<QuestionFormPage />} />
-                        <Route path="/questions/:id/edit" element={<QuestionFormPage />} />
                       </>
                     ) : (
                       <>

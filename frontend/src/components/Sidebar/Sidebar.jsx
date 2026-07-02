@@ -4,9 +4,9 @@ import {
   Hospital,
   ClipboardCheck,
   Users,
+  HelpCircle,
   FileBarChart2,
-  LogOut,
-  FolderTree // Tambahan import icon Kategori
+  LogOut
 } from "lucide-react";
 
 function Sidebar({ user, onLogout }) {
@@ -44,26 +44,17 @@ function Sidebar({ user, onLogout }) {
                 <Hospital size={20} />
                 Rumah Sakit
               </NavLink>
-              
               <NavLink to="/indicators" className={navLinkClass}>
                 <ClipboardCheck size={20} />
                 Indikator
               </NavLink>
-
-              {/* 👇 MENU KATEGORI BARU DITAMBAHKAN DI SINI 👇 */}
-              <NavLink to="/categories" className={navLinkClass}>
-                <FolderTree size={20} />
-                Kategori
+              <NavLink to="/questions" className={navLinkClass}>
+                <HelpCircle size={20} />
+                Pertanyaan
               </NavLink>
-              {/* 👆 BATAS MENU KATEGORI 👆 */}
-
               <NavLink to="/patients" className={navLinkClass}>
                 <Users size={20} />
-                Pasien / User
-              </NavLink>
-              <NavLink to="/questions" className={navLinkClass}>
-                <ClipboardCheck size={20} />
-                Data Pertanyaan
+                User
               </NavLink>
             </>
           ) : (
@@ -73,7 +64,6 @@ function Sidebar({ user, onLogout }) {
                 <ClipboardCheck size={20} />
                 Input Assessment
               </NavLink>
-              
               <NavLink to="/report" className={navLinkClass}>
                 <FileBarChart2 size={20} />
                 Laporan Rekap

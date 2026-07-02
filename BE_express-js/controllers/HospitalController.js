@@ -8,17 +8,10 @@ class HospitalController {
     Hospital.getAll((err, results) => {
       if (err) return errorHandler(res, err, 500, "Gagal ambil data");
 
-      if (results.length === 0) {
-        return res.status(404).json({
-          success: false,
-          message: "Data hospital kosong"
-        });
-      }
-
       res.json({
         success: true,
         message: "Berhasil ambil semua data hospital",
-        data: results
+        data: results || []
       });
     });
   }
@@ -86,6 +79,18 @@ class HospitalController {
       res.json({
         success: true,
         message: "Hospital berhasil diupdate"
+      });
+    });
+  }
+
+  getStats(req, res) {
+    Hospital.getStats((err, results) => {
+      if (err) return errorHandler(res, err, 500, "Gagal mengambil statistik");
+
+      res.json({
+        success: true,
+        message: "Statistik dashboard berhasil diambil",
+        data: results[0]
       });
     });
   }

@@ -25,7 +25,8 @@ class AuthController {
         name: data.name,
         email: data.email,
         password: hashed,
-        role: data.role || "user"
+        role: data.role || "user",
+        hospital_id: data.hospital_id || null
       }, (err) => {
         if (err) return errorHandler(res, err);
 
@@ -71,7 +72,8 @@ class AuthController {
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role
+          role: user.role,
+          hospital_id: user.hospital_id
         }
       });
     });

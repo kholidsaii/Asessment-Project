@@ -33,6 +33,20 @@ const Hospital = {
     ], callback);
   },
 
+  getStats: (callback) => {
+    const sql = `
+      SELECT
+        (SELECT COUNT(*) FROM hospitals) AS totalHospitals,
+        (SELECT COUNT(*) FROM users) AS totalUsers,
+        (SELECT COUNT(*) FROM indicators) AS totalIndicators,
+        (SELECT COUNT(*) FROM assessments) AS totalAssessments,
+        (SELECT COUNT(DISTINCT hospital_id) FROM assessments) AS assessedHospitals,
+        ROUND(IFNULL((SELECT AVG(score) FROM assessments), 0), 2) AS averageScore
+    `;
+
+    db.query(sql, callback);
+  },
+
   delete: (id, callback) => {
     db.query("DELETE FROM hospitals WHERE id=?", [id], callback);
   }

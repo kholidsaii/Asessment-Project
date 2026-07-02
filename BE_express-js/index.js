@@ -1,20 +1,26 @@
 require('dotenv').config();
 
 const express = require("express");
+const cors = require("cors");
 const router = require("./routes/api");
 const path = require("path"); // [1] Tambahkan modul path untuk handle direktori
 const PORT = process.env.PORT || 3000;
 const app = express();
 
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  credentials: true
+}));
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-/**
- * [2] Static File Handling (Materi Pertemuan 7)
- * Membuat folder 'uploads' dapat diakses secara publik lewat URL.
- * Contoh: http://localhost:3000/uploads/nama-file.jpg
- */
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.originalUrl}`);
+  next();
+});
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // 
 
 // Routing

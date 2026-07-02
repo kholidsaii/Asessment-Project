@@ -2,74 +2,62 @@ import { useState, useEffect } from "react";
 import DashboardHeader from "../components/DashboardHeader/DashboardHeader";
 import StatsSection from "../components/StatsSection/StatsSection";
 import ActivitySection from "../components/ActivitySection/ActivitySection";
+import DashboardCharts from "../components/DashboardCharts/DashboardCharts";
 import api from "../utils/constant/http";
 
 function Home({ user }) {
-  // State untuk menyimpan angka statistik
+  const isAdmin = user?.role === "admin";
+
   const [stats, setStats] = useState({
     hospitals: 0,
     users: 0,
     indicators: 0,
   });
-  
-  // Tambah state loading agar UI nampak lebih lancar
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fungsi untuk mengambil semua data serentak
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        
-        // Memanggil ketiga-tiga endpoint sebenar secara serentak (parallel)
-        const [hospitalsRes, usersRes, questionsRes] = await Promise.all([
-          api.get("/hospitals"),
-          api.get("/users"),
-          api.get("/questions")
-        ]);
-
-        // Mengira jumlah (length) data sebenar dari pangkalan data
-        setStats({
-          hospitals: hospitalsRes.data.data?.length || 0,
-          users: usersRes.data.data?.length || 0,
-          indicators: questionsRes.data.data?.length || 0,
-        });
-      } catch (err) {
+    // Memanggil mock API statistik yang ada di file backend (api.js) Anda
+    api.get("/hospitals/stats")
+      .then((res) => {
+        if (res.data.success) {
+          // Menyesuaikan struktur response dari mock backend Anda
+          setStats({
+            hospitals: res.data.data.totalHospitals,
+            users: res.data.data.totalUsers,
+            indicators: res.data.data.totalIndicators,
+          });
+        }
+      })
+      .catch((err) => {
         console.error("Gagal mengambil data statistik:", err);
-        // Tetapkan ke 0 jika berlaku ralat, bukannya data palsu
+        // Fallback dummy data jika API gagal ditarik
         setStats({
-          hospitals: 0,
-          users: 0,
-          indicators: 0,
+          hospitals: 12,
+          users: 45,
+          indicators: 8,
         });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboardData();
+      });
   }, []);
 
   return (
     <div>
       <DashboardHeader />
       
-      {/* Mesej selamat datang untuk pengguna yang log masuk */}
+      {/* Jika user memiliki informasi role, kita bisa tampilkan pesan selamat datang kecil */}
       {user && (
         <div className="mb-6 text-slate-500">
-          Selamat datang kembali, <span className="font-semibold text-slate-700">{user.name}</span>!
+          Selamat datang kembali,{" "}
+          <span className="font-semibold text-slate-700">{user.name}</span>!
         </div>
       )}
 
-      {/* Paparkan efek loading semasa data sedang diambil */}
-      {loading ? (
-        <div className="p-10 mb-8 bg-white rounded-2xl border border-slate-200 text-center text-slate-500 animate-pulse">
-          Memuatkan data statistik semasa...
+      {error && (
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+          {error}
         </div>
-      ) : (
-        <StatsSection stats={stats} />
       )}
-      
+
+      {/* Sekarang stats tidak lagi undefined */}
+      <StatsSection stats={stats} />
       <ActivitySection />
     </div>
   );

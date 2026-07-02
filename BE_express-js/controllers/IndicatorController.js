@@ -6,19 +6,12 @@ class IndicatorController {
 
   index(req, res) {
     Indicator.getAll((err, results) => {
-      if (err) return errorHandler(res, err, 500);
-
-      if (results.length === 0) {
-        return res.status(404).json({
-          success: false,
-          message: "Data indikator kosong"
-        });
-      }
+      if (err) return errorHandler(res, err, 500, "Gagal mengambil data indikator");
 
       res.json({
         success: true,
         message: "Berhasil ambil semua indikator",
-        data: results
+        data: results || []
       });
     });
   }
@@ -27,9 +20,9 @@ class IndicatorController {
     const { id } = req.params;
 
     Indicator.getById(id, (err, results) => {
-      if (err) return errorHandler(res, err, 500);
+      if (err) return errorHandler(res, err, 500, "Gagal mengambil detail indikator");
 
-      if (results.length === 0) {
+      if (!results || results.length === 0) {
         return res.status(404).json({
           success: false,
           message: "Indikator tidak ditemukan"
@@ -38,7 +31,7 @@ class IndicatorController {
 
       res.json({
         success: true,
-        message: "Detail indikator",
+        message: "Detail indikator berhasil diambil",
         data: results[0]
       });
     });
@@ -57,7 +50,7 @@ class IndicatorController {
     }
 
     Indicator.create(data, (err, result) => {
-      if (err) return errorHandler(res, err, 500);
+      if (err) return errorHandler(res, err, 500, "Gagal menambahkan indikator");
 
       res.status(201).json({
         success: true,
@@ -80,8 +73,15 @@ class IndicatorController {
       });
     }
 
-    Indicator.update(id, data, (err) => {
-      if (err) return errorHandler(res, err, 500);
+    Indicator.update(id, data, (err, result) => {
+      if (err) return errorHandler(res, err, 500, "Gagal mengupdate indikator");
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "Indikator tidak ditemukan atau tidak ada data yang berubah"
+        });
+      }
 
       res.json({
         success: true,

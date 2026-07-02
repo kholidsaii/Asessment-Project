@@ -3,32 +3,36 @@ const errorHandler = require("../utils/errorHandler");
 const { validateFile } = require("../utils/validator");
 
 class AssessmentController {
-
-  // ===============================
-  // 1. SUBMIT / UPDATE SCORE
-  // ===============================
   submitScore(req, res) {
     const { hospital_id, question_id, score } = req.body;
 
-    // Validasi basic input
-    if (!hospital_id || !question_id || score === undefined || isNaN(score)) {
+    const numericScore = Number(score);
+
+    if (!hospital_id || !question_id || Number.isNaN(numericScore)) {
       return errorHandler(res, "Data tidak lengkap", 400, "Data tidak lengkap");
     }
 
-    // Validasi file (optional)
+    if (![0, 5, 10].includes(numericScore)) {
+      return errorHandler(
+        res,
+        "Skor tidak valid",
+        400,
+        "Skor hanya boleh bernilai 0, 5, atau 10"
+      );
+    }
+
     const fileError = validateFile(req.file);
     if (fileError) {
       return errorHandler(res, fileError, 400, fileError);
     }
 
-    // Ambil nama file
     const photo = req.file ? req.file.filename : null;
 
-    // Simpan ke database (pakai callback style)
     Assessment.saveScore(
-      { hospital_id, question_id, score, photo },
-      (err, result) => {
+      { hospital_id, question_id, score: numericScore, photo },
+      (err) => {
         if (err) {
+          console.error("Error submit assessment:", err);
           return errorHandler(res, err, 500, "Gagal menyimpan skor assessment");
         }
 
@@ -38,27 +42,55 @@ class AssessmentController {
           data: {
             hospital_id,
             question_id,
-            score,
-            photo: photo
-          }
+            score: numericScore,
+            photo,
+          },
         });
       }
     );
   }
 
-  // ===============================
-  // 2. GET REPORT
-  // ===============================
   getHospitalReport(req, res) {
     const { hospital_id } = req.params;
 
-    Assessment.getSummaryByHospital(hospital_id, (err, results) => {
+    Assessment.getSummaryByHospital(hospital_id, (err, summaryResults) => {
       if (err) {
+        console.error("Error report assessment summary:", err);
         return errorHandler(res, err, 500, "Gagal mengambil laporan");
       }
 
-      if (!results || results.length === 0) {
-        return errorHandler(res, "Data tidak ditemukan", 404, "Data laporan tidak ditemukan");
+      if (!summaryResults || summaryResults.length === 0) {
+        return errorHandler(
+          res,
+          "Data rumah sakit tidak ditemukan",
+          404,
+          "Data rumah sakit tidak ditemukan"
+        );
+      }
+
+      Assessment.getDetailByHospital(hospital_id, (detailErr, detailResults) => {
+        if (detailErr) {
+          console.error("Error report assessment detail:", detailErr);
+          return errorHandler(res, detailErr, 500, "Gagal mengambil detail laporan");
+        }
+
+        res.json({
+          success: true,
+          message: "Berhasil mengambil rekap laporan",
+          data: {
+            ...summaryResults[0],
+            details: detailResults || [],
+          },
+        });
+      });
+    });
+  }
+
+  getLatestActivities(req, res) {
+    Assessment.getLatestActivities(5, (err, results) => {
+      if (err) {
+        console.error("Error latest activities:", err);
+        return errorHandler(res, err, 500, "Gagal mengambil aktivitas terbaru");
       }
 
       res.json({

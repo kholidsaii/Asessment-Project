@@ -15,20 +15,35 @@ function IndicatorFormPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isEditMode) {
-      const fetchOldData = async () => {
-        try {
-          const res = await http.get(`/indicators/${id}`);
-          if (res.data.data) {
-            setName(res.data.data.name);
-            setDescription(res.data.data.description || "");
-          }
-        } catch (err) {
-          setError("Gagal memuat data lama dari server.");
+    if (!isEditMode) return;
+
+    const fetchOldData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const res = await http.get(`/indicators/${id}`);
+
+        if (res.data.success && res.data.data) {
+          setName(res.data.data.name || "");
+          setDescription(res.data.data.description || "");
+        } else {
+          setError("Data indikator tidak ditemukan.");
         }
-      };
-      fetchOldData();
-    }
+      } catch (err) {
+        console.error("Gagal mengambil detail indikator:", err);
+
+        if (err.response?.status === 404) {
+          setError("Data indikator tidak ditemukan. Kemungkinan data sudah dihapus.");
+        } else {
+          setError(err.response?.data?.message || "Gagal memuat data lama dari server.");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOldData();
   }, [id, isEditMode]);
 
   const handleSubmit = async (e) => {
@@ -143,7 +158,7 @@ function IndicatorFormPage() {
               disabled={loading || success}
               className="w-1/2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl text-sm shadow-md disabled:opacity-50 flex items-center justify-center gap-1"
             >
-              {loading ? "Proses..." : "Simpan Data"}
+              {loading ? "Memproses..." : "Simpan Data"}
             </button>
           </div>
         </form>
